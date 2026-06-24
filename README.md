@@ -68,6 +68,8 @@ The Cordoba set is a strict generalization test: different region, different bio
 
 ## Results
 
+Prediction visualizations use a four-panel layout: RGB composite, ground truth mask (dNBR), predicted probability map, and a pixel-level error map. In the error map: **green = true positive** (correctly detected burn scar), **orange = false positive** (predicted as burned but is not), **red = false negative** (missed burn scar). A perfect prediction would show only green.
+
 ### Training curves
 
 ![Training curves](results/training_curves_prithvi_burn_scar.png)
@@ -103,7 +105,6 @@ To address the precision gap, the FPN decoder was fine-tuned on 100 Cordoba patc
 
 ![Fine-tuned predictions](results/cordoba_finetune_predictions.png)
 
-Each row shows: RGB composite, ground truth (dNBR), predicted probability, and a pixel-level error map. Green pixels are true positives (correctly detected burn scars), orange are false positives (model predicts burn where there is none), and red are false negatives (missed burn scars).
 
 | Metric | Zero-shot (base) | Few-shot FT (100 patches) | Change |
 |---|---|---|---|
@@ -134,7 +135,7 @@ wildfire-burn-scar/
 │   ├── 04_preprocess.ipynb              Band stacking, patch extraction
 │   ├── 04b_dnbr_labels.ipynb            dNBR computation and burn scar masks
 │   ├── 05_train_baseline.ipynb          U-Net ResNet34 with FIRMS labels
-│   ├── 06_evaluate_baseline.ipynb       Diagnostic: why FIRMS IoU = 0.013
+│   ├── 06_evaluate.ipynb                Diagnostic: why FIRMS IoU = 0.013
 │   ├── 07_prithvi.ipynb                 Prithvi-100M fine-tuning (Colab)
 │   ├── 08_download_cordoba.ipynb        Cordoba test set generation
 │   ├── 09_evaluate_cordoba.ipynb        Geographic generalization test (Colab)

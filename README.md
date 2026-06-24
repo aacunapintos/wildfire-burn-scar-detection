@@ -4,13 +4,14 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 
 ## Key Results
 
-| Model | Labels | Pixel IoU | Recall |
-|---|---|---|---|
-| U-Net ResNet34 | FIRMS active fire | 0.013 | 7% |
-| **Prithvi-100M + FPN** | **dNBR burn scar** | **0.42** | **73%** |
-| Prithvi-100M + FPN | dNBR, Cordoba (unseen) | 0.13 | **75%** |
+| Model | Labels | Region | Pixel IoU | Recall | Precision |
+|---|---|---|---|---|---|
+| U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% |
+| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.42** | **73%** | **50%** |
+| Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% |
+| **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** |
 
-32x improvement over the FIRMS-based baseline. The Cordoba test demonstrates cross-region, cross-year transfer with high recall (75% of real burn scars detected).
+32x improvement over the FIRMS-based baseline. Few-shot domain adaptation on 100 Cordoba patches (2.14x IoU gain over zero-shot transfer) demonstrates the model learns transferable spectral features that can be rapidly adapted to unseen biomes.
 
 ## Approach
 
@@ -94,15 +95,33 @@ Left: FIRMS active fire detections (sparse, misses most burned area). Right: dNB
 
 The model retains high recall in Cordoba (75% of real burn scars detected) but precision drops due to spectral distribution shift between the Corrientes wetlands biome and the Cordoba mountain scrubland. AUC-ROC of 0.73 confirms the model learned real burn-scar spectral features rather than region-specific patterns.
 
+### Few-shot domain adaptation: Cordoba
+
+To address the precision gap, the FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The remaining 6,534 patches were held out as the test set.
+
+![Fine-tuning curves](results/cordoba_finetune_curves.png)
+
+![Fine-tuned predictions](results/cordoba_finetune_predictions.png)
+
+Each row shows: RGB composite, ground truth (dNBR), predicted probability, and a pixel-level error map. Green pixels are true positives (correctly detected burn scars), orange are false positives (model predicts burn where there is none), and red are false negatives (missed burn scars).
+
+| Metric | Zero-shot (base) | Few-shot FT (100 patches) | Change |
+|---|---|---|---|
+| IoU | 0.13 | **0.28** | +0.15 |
+| Recall | 0.75 | 0.59 | -0.16 |
+| Precision | 0.13 | **0.34** | +0.21 |
+| AUC-ROC | 0.73 | **0.85** | +0.13 |
+
+The fine-tuning trades some recall for a large precision gain, reducing false positives substantially. Overall IoU improves 2.14x. AUC-ROC of 0.85 indicates strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
+
 ## Limitations and Ongoing Improvements
 
 The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes grasslands and wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation. This causes over-prediction (low precision) in Cordoba while detection sensitivity (recall) is preserved.
 
 Ongoing improvements:
 
-- **Multi-region training:** include Cordoba and a third biome in the training split
+- **Multi-region training:** include Cordoba and a third biome in the training split to reduce domain gap from the start
 - **Spectral augmentation:** random per-band scaling during training to reduce spectral memorization
-- **Few-shot domain adaptation:** fine-tune the decoder on 50-100 Cordoba samples to bridge the domain gap with minimal annotation effort
 
 ## Repository Structure
 
@@ -118,14 +137,17 @@ wildfire-burn-scar/
 │   ├── 06_evaluate_baseline.ipynb       Diagnostic: why FIRMS IoU = 0.013
 │   ├── 07_prithvi.ipynb                 Prithvi-100M fine-tuning (Colab)
 │   ├── 08_download_cordoba.ipynb        Cordoba test set generation
-│   └── 09_evaluate_cordoba.ipynb        Geographic generalization test (Colab)
+│   ├── 09_evaluate_cordoba.ipynb        Geographic generalization test (Colab)
+│   └── 10_finetune_cordoba.ipynb        Few-shot domain adaptation (Colab)
 ├── results/
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png
 │   ├── dnbr_distribution.png
 │   ├── dnbr_vs_firms_comparison.png
 │   ├── cordoba_predictions.png
-│   └── cordoba_evaluation_curves.png
+│   ├── cordoba_evaluation_curves.png
+│   ├── cordoba_finetune_curves.png
+│   └── cordoba_finetune_predictions.png
 ├── environment.yml
 └── .gitignore
 ```
@@ -158,7 +180,7 @@ CDS_KEY=your_cds_key
 **Run order**
 
 Notebooks 01-06 run locally on CPU (~4-5 hours total, mostly data download).
-Notebooks 07 and 09 require a GPU and are designed for Google Colab (A100 recommended).
+Notebooks 07, 09, and 10 require a GPU and are designed for Google Colab (A100 recommended).
 
 ## Data Sources
 

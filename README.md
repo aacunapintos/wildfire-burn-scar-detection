@@ -1,17 +1,21 @@
 # Wildfire Burn Scar Detection with Prithvi-100M and Sentinel-2
 
-Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geospatial foundation model fine-tuned on Sentinel-2 L2A imagery. Trained on the 2021-2022 Corrientes, Argentina fire season and evaluated for geographic generalization on an unseen region (Cordoba, 2020).
+Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geospatial foundation model fine-tuned on Sentinel-2 L2A imagery. Trained on the 2021-2022 Corrientes, Argentina fire season (~900,000 ha burned) and evaluated for geographic generalization on an unseen region (Cordoba, 2020).
 
 ## Key Results
 
-| Model | Labels | Region | Pixel IoU | Recall | Precision |
-|---|---|---|---|---|---|
-| U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% |
-| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.42** | **73%** | **50%** |
-| Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% |
-| **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** |
+| Model | Labels | Region | Pixel IoU | Recall | Precision | AUC-ROC |
+|---|---|---|---|---|---|---|
+| U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | — |
+| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.42** | **73%** | **50%** | — |
+| Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% | 0.73 |
+| **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** | **0.85** |
 
-32x improvement over the FIRMS-based baseline. Few-shot domain adaptation on 100 Cordoba patches (2.14x IoU gain over zero-shot transfer) demonstrates the model learns transferable spectral features that can be rapidly adapted to unseen biomes.
+32x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
+
+![Portfolio overview](results/linkedin_card_prithvi.png)
+
+*Best, median, and worst-performing patches from the Corrientes validation set (1,137 patches). Error maps: green = true positive, orange = false positive, red = false negative.*
 
 ## Approach
 
@@ -68,15 +72,9 @@ The Cordoba set is a strict generalization test: different region, different bio
 
 ## Results
 
-Prediction visualizations use a four-panel layout: RGB composite, ground truth mask (dNBR), predicted probability map, and a pixel-level error map. In the error map: **green = true positive** (correctly detected burn scar), **orange = false positive** (predicted as burned but is not), **red = false negative** (missed burn scar). A perfect prediction would show only green.
-
 ### Training curves
 
 ![Training curves](results/training_curves_prithvi_burn_scar.png)
-
-### Sample predictions, Corrientes validation set
-
-![Predictions Corrientes](results/predictions_prithvi_burn_scar.png)
 
 ### dNBR labels versus FIRMS detections
 
@@ -84,27 +82,30 @@ Prediction visualizations use a four-panel layout: RGB composite, ground truth m
 
 Left: FIRMS active fire detections (sparse, misses most burned area). Right: dNBR-derived burn scar mask (complete, spatially consistent).
 
+### Sample predictions, Corrientes validation set
+
+![Predictions Corrientes](results/predictions_prithvi_burn_scar.png)
+
 ### Geographic generalization: Cordoba
 
 ![Cordoba predictions](results/cordoba_predictions.png)
 
-| Metric | Corrientes (val) | Cordoba (test) |
+| Metric | Corrientes (val) | Cordoba (zero-shot) |
 |---|---|---|
 | IoU | 0.42 | 0.13 |
 | Recall | 0.73 | **0.75** |
 | Precision | 0.50 | 0.13 |
-| AUC-ROC | - | 0.73 |
+| AUC-ROC | — | 0.73 |
 
-The model retains high recall in Cordoba (75% of real burn scars detected) but precision drops due to spectral distribution shift between the Corrientes wetlands biome and the Cordoba mountain scrubland. AUC-ROC of 0.73 confirms the model learned real burn-scar spectral features rather than region-specific patterns.
+The model retains high recall in Cordoba (75% of real burn scars detected) but precision drops due to spectral distribution shift between the Corrientes wetlands biome and the Cordoba mountain scrubland. AUC-ROC of 0.73 confirms the model learned transferable burn-scar spectral features.
 
 ### Few-shot domain adaptation: Cordoba
 
-To address the precision gap, the FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The remaining 6,534 patches were held out as the test set.
+The FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The remaining 6,534 patches were held out as the test set.
 
 ![Fine-tuning curves](results/cordoba_finetune_curves.png)
 
 ![Fine-tuned predictions](results/cordoba_finetune_predictions.png)
-
 
 | Metric | Zero-shot (base) | Few-shot FT (100 patches) | Change |
 |---|---|---|---|
@@ -113,17 +114,11 @@ To address the precision gap, the FPN decoder was fine-tuned on 100 Cordoba patc
 | Precision | 0.13 | **0.34** | +0.21 |
 | AUC-ROC | 0.73 | **0.85** | +0.13 |
 
-The fine-tuning trades some recall for a large precision gain, reducing false positives substantially. Overall IoU improves 2.14x. AUC-ROC of 0.85 indicates strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
-
-### Validation set overview
-
-Best, median, and worst-performing patches from the Corrientes validation set, with global metrics.
-
-![Portfolio overview](results/linkedin_card_prithvi.png)
+The fine-tuning trades some recall for a large precision gain. Overall IoU improves 2.14x. AUC-ROC reaches 0.85, indicating strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
 
 ## Limitations and Ongoing Improvements
 
-The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes grasslands and wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation. This causes over-prediction (low precision) in Cordoba while detection sensitivity (recall) is preserved.
+The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba.
 
 Ongoing improvements:
 
@@ -135,26 +130,25 @@ Ongoing improvements:
 ```
 wildfire-burn-scar/
 ├── notebooks/
+│   ├── 00_env_check.ipynb               Environment and dependency check
 │   ├── 01_download_sentinel2.ipynb      Sentinel-2 L2A via CDSE STAC
 │   ├── 02_download_firms.ipynb          NASA FIRMS VIIRS active fire
 │   ├── 03_download_era5.ipynb           ERA5 wind and temperature (ECMWF CDS)
 │   ├── 04_preprocess.ipynb              Band stacking, patch extraction
 │   ├── 04b_dnbr_labels.ipynb            dNBR computation and burn scar masks
-│   ├── 05_train_baseline.ipynb          U-Net ResNet34 with FIRMS labels
+│   ├── 05_train.ipynb                   U-Net ResNet34 baseline with FIRMS labels
 │   ├── 06_evaluate.ipynb                Diagnostic: why FIRMS IoU = 0.013
-│   ├── 07_prithvi.ipynb                 Prithvi-100M fine-tuning (Colab)
+│   ├── 07_prithvi.ipynb                 Prithvi-100M fine-tuning (Colab A100)
 │   ├── 08_download_cordoba.ipynb        Cordoba test set generation
 │   ├── 09_evaluate_cordoba.ipynb        Geographic generalization test (Colab)
 │   ├── 10_finetune_cordoba.ipynb        Few-shot domain adaptation (Colab)
-│   ├── 11_inference_demo.ipynb          Single-patch inference demo (Colab)
-│   └── 12_linkedin_card.ipynb           Portfolio figure: best/median/worst patches (Colab)
+│   └── 11_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
+│   ├── linkedin_card_prithvi.png        Portfolio overview figure
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png
-│   ├── dnbr_distribution.png
 │   ├── dnbr_vs_firms_comparison.png
 │   ├── cordoba_predictions.png
-│   ├── cordoba_evaluation_curves.png
 │   ├── cordoba_finetune_curves.png
 │   └── cordoba_finetune_predictions.png
 ├── environment.yml
@@ -188,8 +182,8 @@ CDS_KEY=your_cds_key
 
 **Run order**
 
-Notebooks 01-06 run locally on CPU (~4-5 hours total, mostly data download).
-Notebooks 07, 09, and 10 require a GPU and are designed for Google Colab (A100 recommended).
+Notebooks 00-06 and 08 run locally on CPU (~4-5 hours total, mostly data download).
+Notebooks 07, 09, 10, and 11 require a GPU and are designed for Google Colab (A100 recommended).
 
 ## Data Sources
 

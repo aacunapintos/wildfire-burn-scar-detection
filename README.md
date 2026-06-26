@@ -115,6 +115,12 @@ To address the precision gap, the FPN decoder was fine-tuned on 100 Cordoba patc
 
 The fine-tuning trades some recall for a large precision gain, reducing false positives substantially. Overall IoU improves 2.14x. AUC-ROC of 0.85 indicates strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
 
+### Validation set overview
+
+Best, median, and worst-performing patches from the Corrientes validation set, with global metrics.
+
+![Portfolio overview](results/linkedin_card_prithvi.png)
+
 ## Limitations and Ongoing Improvements
 
 The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes grasslands and wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation. This causes over-prediction (low precision) in Cordoba while detection sensitivity (recall) is preserved.
@@ -139,7 +145,9 @@ wildfire-burn-scar/
 │   ├── 07_prithvi.ipynb                 Prithvi-100M fine-tuning (Colab)
 │   ├── 08_download_cordoba.ipynb        Cordoba test set generation
 │   ├── 09_evaluate_cordoba.ipynb        Geographic generalization test (Colab)
-│   └── 10_finetune_cordoba.ipynb        Few-shot domain adaptation (Colab)
+│   ├── 10_finetune_cordoba.ipynb        Few-shot domain adaptation (Colab)
+│   ├── 11_inference_demo.ipynb          Single-patch inference demo (Colab)
+│   └── 12_linkedin_card.ipynb           Portfolio figure: best/median/worst patches (Colab)
 ├── results/
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png

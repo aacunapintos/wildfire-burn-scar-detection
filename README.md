@@ -51,7 +51,7 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 | | |
 |---|---|
 | Region | Corrientes Province, NE Argentina (wetlands and grasslands) |
-| Coordinates | 59.5W-56.0W / 29.0S-26.5N |
+| Coordinates | 59.5W-56.0W / 29.0S-26.5S |
 | Fire event | December 2021 - February 2022 (austral summer, extreme drought) |
 | Scenes | 6 Sentinel-2 L2A tiles, 0% cloud cover |
 | Patches | 5,687 x 224x224 px |
@@ -63,7 +63,7 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 | | |
 |---|---|
 | Region | Cordoba Province, central Argentina (Sierras Chicas, xerophytic scrubland) |
-| Coordinates | 65.5W-62.5W / 33.0S-30.5N |
+| Coordinates | 65.5W-62.5W / 33.0S-30.5S |
 | Fire event | October-November 2020 |
 | Patches | 6,634 x 224x224 px |
 | Positive rate | 63.7% (dNBR > 0.10) |
@@ -133,7 +133,7 @@ wildfire-burn-scar/
 │   ├── 00_env_check.ipynb               Environment and dependency check
 │   ├── 01_download_sentinel2.ipynb      Sentinel-2 L2A via CDSE STAC
 │   ├── 02_download_firms.ipynb          NASA FIRMS VIIRS active fire
-│   ├── 03_download_era5.ipynb           ERA5 wind and temperature (ECMWF CDS)
+│   ├── 03_download_era5.ipynb           ERA5 wind and temperature (ECMWF CDS) — downloaded for fire spread feature engineering, not used in the final segmentation model
 │   ├── 04_preprocess.ipynb              Band stacking, patch extraction
 │   ├── 04b_dnbr_labels.ipynb            dNBR computation and burn scar masks
 │   ├── 05_train.ipynb                   U-Net ResNet34 baseline with FIRMS labels

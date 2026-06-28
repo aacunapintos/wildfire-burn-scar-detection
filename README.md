@@ -13,7 +13,7 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 
 32x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
 
-![Portfolio overview](results/linkedin_card_prithvi.png)
+![Portfolio overview](results/validation_overview.png)
 
 *Best, median, and worst-performing patches from the Corrientes validation set (1,137 patches). Error maps: green = true positive, orange = false positive, red = false negative.*
 
@@ -144,7 +144,7 @@ wildfire-burn-scar/
 │   ├── 10_finetune_cordoba.ipynb        Few-shot domain adaptation (Colab)
 │   └── 11_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
-│   ├── linkedin_card_prithvi.png        Portfolio overview figure
+│   ├── validation_overview.png          Best/median/worst patches, training curve, global metrics
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png
 │   ├── dnbr_vs_firms_comparison.png

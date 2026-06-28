@@ -136,7 +136,7 @@ Planned future work: multi-region training to reduce domain gap from the start, 
 | v1.1 | Optimal threshold t=0.65 | 0.43 | 0.604 | Post-processing only, no retraining. Precision +15%, false positives reduced. |
 | v1.2 | Continuation training epochs 41-80 | 0.45 | 0.621 | Best checkpoint epoch 73. Precision +18% vs v1.1. |
 | v1.3 | Partial backbone unfreeze (last 2 blocks) | **0.50** | **0.662** | Epochs 81-100, differential LR (1e-5/5e-5). IoU +9.9% vs v1.2. |
-| v1.4 | Spectral augmentation (contrast ±15%, brightness, noise) | — | — | Augmentation too aggressive late in training — IoU dropped to 0.36, v1.3 checkpoint preserved. |
+| v1.4 | Spectral variation training (contrast ±15%, brightness, noise) | — | — | Perturbation too aggressive late in training — IoU dropped to 0.36, v1.3 checkpoint preserved. |
 
 ## Repository Structure
 

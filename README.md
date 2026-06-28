@@ -86,6 +86,12 @@ Left: FIRMS active fire detections (sparse, misses most burned area). Right: dNB
 
 ![Predictions Corrientes](results/predictions_prithvi_burn_scar.png)
 
+### Threshold optimization (v1.1)
+
+![Threshold sweep](results/threshold_sweep.png)
+
+Sweeping thresholds 0.05→0.95 on the validation set reveals that the optimal operating point is **t=0.65** (not the default 0.50). At t=0.65, precision improves from 0.50 to 0.57 (+15%) by reducing false positives, while IoU and F1 also improve slightly. The PR curve shows the model has strong discriminative ability — the gain comes from choosing a better decision boundary, not retraining.
+
 ### Geographic generalization: Cordoba
 
 ![Cordoba predictions](results/cordoba_predictions.png)

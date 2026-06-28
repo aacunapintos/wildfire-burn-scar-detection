@@ -27,22 +27,39 @@ import os
 import sys
 import re
 import json
+from pathlib import Path
+
+# ── PROJ fix — MUST happen before rasterio import ────────────────────────────
+# PostgreSQL (and old pyproj) ship their own PROJ that conflicts with rasterio.
+# Priority: rasterio/proj_data (PROJ6+) > conda Library/share/proj > skip.
+_proj_set = False
+
+# 1. rasterio's own bundled proj_data (pip install on Windows — most reliable)
+import site
+for _sp in site.getsitepackages():
+    _proj_rasterio = Path(_sp) / "rasterio" / "proj_data"
+    if _proj_rasterio.exists():
+        os.environ["PROJ_DATA"] = str(_proj_rasterio)
+        os.environ["PROJ_LIB"]  = str(_proj_rasterio)
+        _proj_set = True
+        break
+
+# 2. conda environment path (fallback)
+if not _proj_set:
+    _conda_prefix = Path(sys.executable).parent.parent
+    _proj_conda = _conda_prefix / "Library" / "share" / "proj"
+    if _proj_conda.exists():
+        os.environ["PROJ_DATA"] = str(_proj_conda)
+        os.environ["PROJ_LIB"]  = str(_proj_conda)
+        _proj_set = True
+
 import numpy as np
 import rasterio
 import rasterio.warp
 import rasterio.windows
-import rasterio.transform
 from rasterio.crs import CRS
-from pathlib import Path
 from tqdm import tqdm
 from collections import defaultdict
-
-# ── PROJ fix (same as notebook 02) ───────────────────────────────────────────
-_conda_prefix = Path(sys.executable).parent.parent
-_proj_data = _conda_prefix / "Library" / "share" / "proj"
-if _proj_data.exists():
-    os.environ["PROJ_DATA"] = str(_proj_data)
-    os.environ["PROJ_LIB"]  = str(_proj_data)
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BASE         = Path(__file__).parent.parent

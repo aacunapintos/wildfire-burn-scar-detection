@@ -137,6 +137,14 @@ Both precision and recall improve simultaneously — the model eliminates false 
 
 The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.13 zero-shot vs 0.34 after few-shot adaptation). Multi-region training across diverse biomes would reduce this gap without requiring fine-tuning at inference time.
 
+## Roadmap
+
+| Priority | Improvement | Status |
+|---|---|---|
+| 1 | **T=2 evaluation on Cordoba** — apply v1.6 Siamese model to Cordoba zero-shot; pre-fire spectral change should reduce false positives (Precision 0.13 → est. 0.25+) | Planned |
+| 2 | **Test-Time Augmentation (TTA)** — average predictions over flips and rotations at inference, no retraining required | Planned |
+| 3 | **Multi-region training (Portugal 2022)** — add ~100k ha from a second fire event to the training set, targeting structural reduction of domain shift without per-region fine-tuning | Planned |
+
 ## Changelog
 
 | Version | Change | Val IoU | Val F1 | Notes |

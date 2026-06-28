@@ -130,19 +130,13 @@ Ongoing improvements:
 ```
 wildfire-burn-scar/
 ├── notebooks/
-│   ├── 00_env_check.ipynb               Environment and dependency check
-│   ├── 01_download_sentinel2.ipynb      Sentinel-2 L2A via CDSE STAC
-│   ├── 02_download_firms.ipynb          NASA FIRMS VIIRS active fire
-│   ├── 03_download_era5.ipynb           ERA5 wind and temperature (ECMWF CDS) — downloaded for fire spread feature engineering, not used in the final segmentation model
-│   ├── 04_preprocess.ipynb              Band stacking, patch extraction
-│   ├── 04b_dnbr_labels.ipynb            dNBR computation and burn scar masks
-│   ├── 05_train.ipynb                   U-Net ResNet34 baseline with FIRMS labels
-│   ├── 06_evaluate.ipynb                Diagnostic: why FIRMS IoU = 0.013
-│   ├── 07_prithvi.ipynb                 Prithvi-100M fine-tuning (Colab A100)
-│   ├── 08_download_cordoba.ipynb        Cordoba test set generation
-│   ├── 09_evaluate_cordoba.ipynb        Geographic generalization test (Colab)
-│   ├── 10_finetune_cordoba.ipynb        Few-shot domain adaptation (Colab)
-│   └── 11_inference_demo.ipynb          Single-patch inference demo (Colab)
+│   ├── 01_data_acquisition.ipynb        Sentinel-2 L2A (CDSE) + NASA FIRMS download
+│   ├── 02_preprocessing.ipynb           Band stacking, patch extraction, dNBR labels
+│   ├── 03_baseline.ipynb                U-Net ResNet34 training + diagnostic evaluation
+│   ├── 04_prithvi_training.ipynb        Prithvi-100M fine-tuning (Colab A100)
+│   ├── 05_cordoba_data.ipynb            Córdoba test set acquisition and preprocessing
+│   ├── 06_cordoba_evaluation.ipynb      Geographic generalization + few-shot adaptation (Colab A100)
+│   └── 07_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
 │   ├── validation_overview.png          Best/median/worst patches, training curve, global metrics
 │   ├── training_curves_prithvi_burn_scar.png
@@ -182,8 +176,8 @@ CDS_KEY=your_cds_key
 
 **Run order**
 
-Notebooks 00-06 and 08 run locally on CPU (~4-5 hours total, mostly data download).
-Notebooks 07, 09, 10, and 11 require a GPU and are designed for Google Colab (A100 recommended).
+Notebooks 01-03 and 05 run locally on CPU (~4-5 hours total, mostly data download).
+Notebooks 04, 06, and 07 require a GPU and are designed for Google Colab (A100 recommended).
 
 ## Data Sources
 

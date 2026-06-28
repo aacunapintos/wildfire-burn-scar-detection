@@ -7,11 +7,11 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 | Model | Labels | Region | Pixel IoU | Recall | Precision | AUC-ROC |
 |---|---|---|---|---|---|---|
 | U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | — |
-| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.42** | **73%** | **50%** | — |
+| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.43** | **64%** | **57%** | — |
 | Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% | 0.73 |
 | **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** | **0.85** |
 
-32x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
+33x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
 
 ![Portfolio overview](results/validation_overview.png)
 
@@ -139,6 +139,7 @@ wildfire-burn-scar/
 │   └── 07_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
 │   ├── validation_overview.png          Best/median/worst patches, training curve, global metrics
+│   ├── threshold_sweep.png              Metrics vs threshold + PR curve (v1.1)
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png
 │   ├── dnbr_vs_firms_comparison.png
@@ -186,6 +187,13 @@ Notebooks 04, 06, and 07 require a GPU and are designed for Google Colab (A100 r
 | Sentinel-2 L2A | ESA / Copernicus Data Space | Free, registration required |
 | VIIRS SNPP active fire | NASA FIRMS | Free, API key required |
 | ERA5 reanalysis | ECMWF / Copernicus CDS | Free, registration required |
+
+## Changelog
+
+| Version | Change | Val IoU | Val F1 | Notes |
+|---|---|---|---|---|
+| v1.0 | Base model, threshold=0.50 | 0.42 | 0.591 | Prithvi-100M + FPN, 40 epochs |
+| v1.1 | Optimal threshold t=0.65 | **0.43** | **0.604** | Post-processing only, no retraining. Precision +15%, false positives reduced. |
 
 ## References
 

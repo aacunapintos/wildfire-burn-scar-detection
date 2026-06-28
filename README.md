@@ -7,15 +7,15 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 | Model | Labels | Region | Pixel IoU | Recall | Precision | AUC-ROC |
 |---|---|---|---|---|---|---|
 | U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | — |
-| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.50** | **65%** | **67%** | — |
+| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.54** | **71%** | **69%** | — |
 | Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% | 0.73 |
 | **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** | **0.85** |
 
-38x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
+41x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
 
 ![Portfolio overview](results/validation_overview.png)
 
-*Best, median, and worst-performing patches from the Corrientes validation set (1,138 patches). Error maps: green = true positive, orange = false positive, red = false negative.*
+*Best, median, and worst-performing patches from the Corrientes validation set (1,138 patches). Error maps: green = true positive, orange = false positive, red = false negative. Metrics correspond to v1.5 (IoU=0.54, F1=0.70).*
 
 ## Approach
 
@@ -38,8 +38,9 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 |---|---|
 | Backbone | Prithvi-EO-1.0-100M (IBM/NASA) |
 | Pretraining | Masked autoencoding on HLS (Harmonized Landsat-Sentinel) |
+| Neck | Multi-scale FPN neck (transformer layers 2, 5, 8, 11 → 256-ch feature map) — added in v1.5 |
 | Decoder | Feature Pyramid Network (FPN), trained from scratch |
-| Encoder | Frozen v1.0–v1.2; last 2 transformer blocks unfrozen in v1.3 |
+| Encoder | Frozen v1.0–v1.2; last 2 transformer blocks unfrozen in v1.3+ |
 | Input bands | B02, B03, B04, B8A, B11, B12 at 10 m resolution |
 | Patch size | 224x224 px |
 | Loss | DiceLoss + FocalLoss, fire class weight = 5.0 |
@@ -98,9 +99,9 @@ Sweeping thresholds 0.05→0.95 on the validation set reveals that the optimal o
 
 | Metric | Corrientes (val) | Cordoba (zero-shot) |
 |---|---|---|
-| IoU | 0.50 | 0.13 |
-| Recall | 0.65 | **0.75** |
-| Precision | 0.67 | 0.13 |
+| IoU | 0.54 | 0.13 |
+| Recall | 0.71 | **0.75** |
+| Precision | 0.69 | 0.13 |
 | AUC-ROC | — | 0.73 |
 
 The model retains high recall in Cordoba (75% of real burn scars detected) but precision drops due to spectral distribution shift between the Corrientes wetlands biome and the Cordoba mountain scrubland. AUC-ROC of 0.73 confirms the model learned transferable burn-scar spectral features.
@@ -126,7 +127,7 @@ The fine-tuning trades some recall for a large precision gain. Overall IoU impro
 
 The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.13 zero-shot vs 0.34 after few-shot adaptation).
 
-Planned future work: multi-region training to reduce domain gap from the start, and spectral augmentation during training to reduce biome-specific memorization.
+Planned future work: multi-region training to reduce domain gap from the start, and temporal fusion using Prithvi's native two-date input (pre-fire + post-fire) to give the model direct access to spectral change rather than relying on a single post-fire image.
 
 ## Changelog
 
@@ -137,6 +138,7 @@ Planned future work: multi-region training to reduce domain gap from the start, 
 | v1.2 | Continuation training epochs 41-80 | 0.45 | 0.621 | Best checkpoint epoch 73. Precision +18% vs v1.1. |
 | v1.3 | Partial backbone unfreeze (last 2 blocks) | **0.50** | **0.662** | Epochs 81-100, differential LR (1e-5/5e-5). IoU +9.9% vs v1.2. |
 | v1.4 | Spectral variation training (contrast ±15%, brightness, noise) | — | — | Perturbation too aggressive late in training — IoU dropped to 0.36, v1.3 checkpoint preserved. |
+| v1.5 | Multi-scale neck (FPN with transformer layers 2, 5, 8, 11) | **0.54** | **0.700** | 45 epochs (25 backbone frozen + 20 partial unfreeze), differential LR (1e-5/5e-5). IoU +8.9% vs v1.3. |
 
 ## Repository Structure
 
@@ -151,11 +153,12 @@ wildfire-burn-scar/
 │   ├── 06_cordoba_evaluation.ipynb      Geographic generalization + few-shot adaptation (Colab A100)
 │   └── 07_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
-│   ├── validation_overview.png          Global: best/median/worst patches, model progression, v1.3 metrics
+│   ├── validation_overview.png          Global: best/median/worst patches, model progression, v1.5 metrics
 │   ├── validation_overview_v10.png      Per-tag: v1.0 baseline vs FIRMS comparison
 │   ├── validation_overview_v11.png      Per-tag: v1.1 threshold optimization
 │   ├── validation_overview_v12.png      Per-tag: v1.2 continuation training
 │   ├── validation_overview_v13.png      Per-tag: v1.3 backbone unfreeze
+│   ├── validation_overview_v15.png      Per-tag: v1.5 multi-scale neck
 │   ├── threshold_sweep.png              Metrics vs threshold + PR curve (v1.1)
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png

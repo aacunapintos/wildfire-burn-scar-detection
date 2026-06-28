@@ -7,15 +7,16 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 | Model | Labels | Region | Pixel IoU | Recall | Precision | AUC-ROC |
 |---|---|---|---|---|---|---|
 | U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | — |
-| **Prithvi-100M + FPN** | **dNBR burn scar** | **Corrientes** | **0.54** | **71%** | **69%** | — |
+| Prithvi-100M + FPN (v1.5, T=1) | dNBR burn scar | Corrientes | 0.54 | 71% | 69% | — |
+| **Prithvi-100M + FPN (v1.6, T=2)** | **dNBR burn scar** | **Corrientes** | **0.64** | **81%** | **75%** | — |
 | Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% | 0.73 |
 | **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** | **0.85** |
 
-41x improvement over the FIRMS-based baseline. Few-shot fine-tuning of the decoder on 100 Cordoba patches improves IoU 2.14x over zero-shot transfer and raises AUC-ROC from 0.73 to 0.85, with the encoder kept frozen throughout.
+49x improvement over the FIRMS-based baseline. Adding a pre-fire temporal input (T=2 Siamese fusion) raises IoU from 0.54 to 0.64 (+18.6%), improving both precision and recall simultaneously. Few-shot fine-tuning of the decoder on 100 Cordoba patches achieves 2.14x IoU gain over zero-shot transfer with the encoder kept frozen throughout.
 
 ![Portfolio overview](results/validation_overview.png)
 
-*Best, median, and worst-performing patches from the Corrientes validation set (1,138 patches). Error maps: green = true positive, orange = false positive, red = false negative. Metrics correspond to v1.5 (IoU=0.54, F1=0.70).*
+*Best, median, and worst-performing patches from the Corrientes validation set. Error maps: green = true positive, orange = false positive, red = false negative. Right panel: full model progression v1.0→v1.6 and best-model metrics (v1.6 T=2: IoU=0.64, F1=0.78).*
 
 ## Approach
 
@@ -36,12 +37,14 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 
 | Component | Details |
 |---|---|
-| Backbone | Prithvi-EO-1.0-100M (IBM/NASA) |
+| Backbone | Prithvi-EO-1.0-100M (IBM/NASA) — shared weights in Siamese T=2 |
 | Pretraining | Masked autoencoding on HLS (Harmonized Landsat-Sentinel) |
-| Neck | Multi-scale FPN neck (transformer layers 2, 5, 8, 11 → 256-ch feature map) — added in v1.5 |
+| Neck (v1.5) | Multi-scale FPN neck (transformer layers 2, 5, 8, 11 → 256-ch feature map) |
+| Neck (v1.6) | TemporalFusionNeck: concat(pre, post) per layer → 1×1 Conv → top-down FPN |
 | Decoder | Feature Pyramid Network (FPN), trained from scratch |
 | Encoder | Frozen v1.0–v1.2; last 2 transformer blocks unfrozen in v1.3+ |
 | Input bands | B02, B03, B04, B8A, B11, B12 at 10 m resolution |
+| Temporal input | T=1 (post-fire only) through v1.5 — T=2 (pre + post) from v1.6 |
 | Patch size | 224x224 px |
 | Loss | DiceLoss + FocalLoss, fire class weight = 5.0 |
 
@@ -123,11 +126,24 @@ The FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The
 
 The fine-tuning trades some recall for a large precision gain. Overall IoU improves 2.14x. AUC-ROC reaches 0.85, indicating strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
 
+### Temporal fusion: Siamese T=2 model (v1.6)
+
+Adding a pre-fire image (Oct-Nov 2021) as a second temporal input gives the model direct access to spectral change, rather than relying on post-fire reflectance alone. The Siamese backbone (shared weights) processes pre-fire and post-fire images in parallel; the `TemporalFusionNeck` concatenates features at transformer layers 2, 5, 8, 11 and fuses them before the FPN decoder.
+
+![T=2 predictions](results/validation_overview_t2.png)
+
+| Metric | v1.5 (T=1, post-fire only) | v1.6 (T=2, pre + post) | Δ |
+|---|---|---|---|
+| IoU | 0.5385 | **0.6389** | +0.1004 (+18.6%) |
+| F1 | 0.700 | **0.780** | +0.080 |
+| Precision | 0.693 | **0.753** | +0.060 |
+| Recall | 0.707 | **0.808** | +0.101 |
+
+Both precision and recall improve simultaneously — the model eliminates false positives in areas with burn-scar-like reflectance that showed no spectral change between dates (bare soil, dry grassland). Optimal threshold shifted from 0.525 to 0.450, indicating the model outputs more calibrated probability estimates when spectral change information is available.
+
 ## Limitations
 
-The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.13 zero-shot vs 0.34 after few-shot adaptation).
-
-Planned future work: multi-region training to reduce domain gap from the start, and temporal fusion using Prithvi's native two-date input (pre-fire + post-fire) to give the model direct access to spectral change rather than relying on a single post-fire image.
+The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.13 zero-shot vs 0.34 after few-shot adaptation). Multi-region training across diverse biomes would reduce this gap without requiring fine-tuning at inference time.
 
 ## Changelog
 
@@ -139,6 +155,7 @@ Planned future work: multi-region training to reduce domain gap from the start, 
 | v1.3 | Partial backbone unfreeze (last 2 blocks) | **0.50** | **0.662** | Epochs 81-100, differential LR (1e-5/5e-5). IoU +9.9% vs v1.2. |
 | v1.4 | Spectral variation training (contrast ±15%, brightness, noise) | — | — | Perturbation too aggressive late in training — IoU dropped to 0.36, v1.3 checkpoint preserved. |
 | v1.5 | Multi-scale neck (FPN with transformer layers 2, 5, 8, 11) | **0.54** | **0.700** | 45 epochs (25 backbone frozen + 20 partial unfreeze), differential LR (1e-5/5e-5). IoU +8.9% vs v1.3. |
+| v1.6 | Siamese T=2 temporal fusion (pre-fire Oct-Nov 2021 + post-fire) | **0.64** | **0.780** | TemporalFusionNeck fuses pre/post features at layers 2,5,8,11. 45 epochs, threshold=0.450. IoU +18.6% vs v1.5. |
 
 ## Repository Structure
 
@@ -148,17 +165,20 @@ wildfire-burn-scar/
 │   ├── 01_data_acquisition.ipynb        Sentinel-2 L2A (CDSE) + NASA FIRMS download
 │   ├── 02_preprocessing.ipynb           Band stacking, patch extraction, dNBR labels
 │   ├── 03_baseline.ipynb                U-Net ResNet34 training + diagnostic evaluation
-│   ├── 04_prithvi_training.ipynb        Prithvi-100M fine-tuning (Colab A100)
+│   ├── 04_prithvi_training.ipynb        Prithvi-100M fine-tuning v1.0–v1.5 (Colab A100)
+│   ├── 04b_prithvi_t2.ipynb             Siamese T=2 temporal fusion — v1.6 (Colab A100)
 │   ├── 05_cordoba_data.ipynb            Córdoba test set acquisition and preprocessing
 │   ├── 06_cordoba_evaluation.ipynb      Geographic generalization + few-shot adaptation (Colab A100)
 │   └── 07_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
-│   ├── validation_overview.png          Global: best/median/worst patches, model progression, v1.5 metrics
+│   ├── validation_overview.png          Global: best/median/worst patches, model progression v1.0→v1.6
+│   ├── validation_overview_t2.png       T=2 detailed: BEST/MED/WORST patches, training curves, metrics
 │   ├── validation_overview_v10.png      Per-tag: v1.0 baseline vs FIRMS comparison
 │   ├── validation_overview_v11.png      Per-tag: v1.1 threshold optimization
 │   ├── validation_overview_v12.png      Per-tag: v1.2 continuation training
 │   ├── validation_overview_v13.png      Per-tag: v1.3 backbone unfreeze
 │   ├── validation_overview_v15.png      Per-tag: v1.5 multi-scale neck
+│   ├── validation_overview_v16.png      Per-tag: v1.6 T=2 temporal fusion
 │   ├── threshold_sweep.png              Metrics vs threshold + PR curve (v1.1)
 │   ├── training_curves_prithvi_burn_scar.png
 │   ├── predictions_prithvi_burn_scar.png
@@ -198,7 +218,7 @@ CDS_KEY=your_cds_key
 **Run order**
 
 Notebooks 01-03 and 05 run locally on CPU (~4-5 hours total, mostly data download).
-Notebooks 04, 06, and 07 require a GPU and are designed for Google Colab (A100 recommended).
+Notebooks 04, 04b, 06, and 07 require a GPU and are designed for Google Colab (A100 recommended).
 
 ## Data Sources
 

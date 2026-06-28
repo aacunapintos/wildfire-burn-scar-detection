@@ -9,10 +9,10 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 | U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | — |
 | Prithvi-100M + FPN (v1.5, T=1) | dNBR burn scar | Corrientes | 0.54 | 71% | 69% | — |
 | **Prithvi-100M + FPN (v1.6, T=2)** | **dNBR burn scar** | **Corrientes** | **0.64** | **81%** | **75%** | — |
-| Prithvi-100M + FPN | dNBR | Cordoba (zero-shot) | 0.13 | 75% | 13% | 0.73 |
-| **Prithvi-100M + FPN (few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.28** | **59%** | **34%** | **0.85** |
+| Prithvi-100M + FPN (v1.5, zero-shot) | dNBR | Cordoba | 0.09 | 27% | 12% | 0.67 |
+| **Prithvi-100M + FPN (v1.5, few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.21** | **55%** | **26%** | **0.83** |
 
-49x improvement over the FIRMS-based baseline. Adding a pre-fire temporal input (T=2 Siamese fusion) raises IoU from 0.54 to 0.64 (+18.6%), improving both precision and recall simultaneously. Few-shot fine-tuning of the decoder on 100 Cordoba patches achieves 2.14x IoU gain over zero-shot transfer with the encoder kept frozen throughout.
+49x improvement over the FIRMS-based baseline. Adding a pre-fire temporal input (T=2 Siamese fusion) raises IoU from 0.54 to 0.64 (+18.6%), improving both precision and recall simultaneously. Zero-shot transfer to Cordoba with v1.5 yields IoU=0.09; few-shot fine-tuning of the decoder on 100 Cordoba patches raises IoU to 0.21 (+139%, 2.4x) and AUC-ROC to 0.83, with encoder kept frozen throughout.
 
 ![Portfolio overview](results/validation_overview.png)
 
@@ -94,12 +94,12 @@ Sweeping thresholds 0.05→0.95 on the validation set reveals that the optimal o
 
 | Metric | Corrientes val (v1.5) | Cordoba zero-shot (v1.5) |
 |---|---|---|
-| IoU | 0.54 | 0.13 |
-| Recall | 0.71 | **0.75** |
-| Precision | 0.69 | 0.13 |
-| AUC-ROC | — | 0.73 |
+| IoU | 0.54 | 0.09 |
+| Recall | 0.71 | 0.27 |
+| Precision | 0.69 | 0.12 |
+| AUC-ROC | — | 0.67 |
 
-The model retains high recall in Cordoba (75% of real burn scars detected) but precision drops due to spectral distribution shift between the Corrientes wetlands biome and the Cordoba mountain scrubland. AUC-ROC of 0.73 confirms the model learned transferable burn-scar spectral features.
+Zero-shot transfer to Cordoba degrades more sharply with v1.5 than with earlier versions (v1.0 zero-shot achieved IoU=0.13, AUC-ROC=0.73). The backbone partial unfreeze (v1.3+) and multi-scale neck adapted the model more tightly to Corrientes spectral patterns, reducing cross-biome generalization. AUC-ROC=0.67 remains above random (0.5), confirming that the model retains some transferable burn-scar features. This finding directly motivates Roadmap items #1 (apply T=2 model to Cordoba) and #3 (multi-region training).
 
 ### Few-shot domain adaptation: Cordoba
 
@@ -109,14 +109,14 @@ The FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The
 
 ![Fine-tuned predictions](results/cordoba_finetune_predictions.png)
 
-| Metric | Zero-shot (base) | Few-shot FT (100 patches) | Change |
+| Metric | Zero-shot (v1.5) | Few-shot FT (100 patches) | Change |
 |---|---|---|---|
-| IoU | 0.13 | **0.28** | +0.15 |
-| Recall | 0.75 | 0.59 | -0.16 |
-| Precision | 0.13 | **0.34** | +0.21 |
-| AUC-ROC | 0.73 | **0.85** | +0.13 |
+| IoU | 0.09 | **0.21** | +0.12 (+139%) |
+| Recall | 0.27 | **0.55** | +0.28 |
+| Precision | 0.12 | **0.26** | +0.14 |
+| AUC-ROC | 0.67 | **0.83** | +0.15 |
 
-The fine-tuning trades some recall for a large precision gain. Overall IoU improves 2.14x. AUC-ROC reaches 0.85, indicating strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
+Fine-tuning the FPN decoder on 100 Cordoba patches (encoder kept frozen throughout) yields a 2.4x IoU gain and raises AUC-ROC from 0.67 to 0.83. All adaptation comes from the decoder adjusting to the new biome's spectral distribution — the Prithvi-100M encoder weights are never updated.
 
 ### Temporal fusion: Siamese T=2 model (v1.6)
 
@@ -135,13 +135,13 @@ Both precision and recall improve simultaneously — the model eliminates false 
 
 ## Limitations
 
-The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.13 zero-shot vs 0.34 after few-shot adaptation). Multi-region training across diverse biomes would reduce this gap without requiring fine-tuning at inference time.
+The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.12 zero-shot, 0.26 after few-shot adaptation). Multi-region training across diverse biomes would reduce this gap without requiring fine-tuning at inference time.
 
 ## Roadmap
 
 | Priority | Improvement | Status |
 |---|---|---|
-| 1 | **T=2 evaluation on Cordoba** — apply v1.6 Siamese model to Cordoba zero-shot; pre-fire spectral change should reduce false positives (Precision 0.13 → est. 0.25+) | Planned |
+| 1 | **T=2 evaluation on Cordoba** — apply v1.6 Siamese model to Cordoba zero-shot; pre-fire spectral change should reduce false positives (v1.5 zero-shot Precision=0.12 → est. 0.25+) | Planned |
 | 2 | **Test-Time Augmentation (TTA)** — average predictions over flips and rotations at inference, no retraining required | Planned |
 | 3 | **Multi-region training (Portugal 2022)** — add ~100k ha from a second fire event to the training set, targeting structural reduction of domain shift without per-region fine-tuning | Planned |
 

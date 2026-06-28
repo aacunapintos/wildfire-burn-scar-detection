@@ -76,19 +76,11 @@ The Cordoba set is a strict generalization test: different region, different bio
 
 ## Results
 
-### Training curves
-
-![Training curves](results/training_curves_prithvi_burn_scar.png)
-
 ### dNBR labels versus FIRMS detections
 
 ![dNBR vs FIRMS](results/dnbr_vs_firms_comparison.png)
 
-Left: FIRMS active fire detections (sparse, misses most burned area). Right: dNBR-derived burn scar mask (complete, spatially consistent).
-
-### Sample predictions, Corrientes validation set
-
-![Predictions Corrientes](results/predictions_prithvi_burn_scar.png)
+Each row shows one patch: RGB image (left), dNBR burn scar mask (center, threshold dNBR > 0.10), and FIRMS active fire mask (right, near-zero). dNBR captures complete burned areas; FIRMS misses them because the thermal anomaly signal disappears days after burning.
 
 ### Threshold optimization (v1.1)
 
@@ -100,7 +92,7 @@ Sweeping thresholds 0.05→0.95 on the validation set reveals that the optimal o
 
 ![Cordoba predictions](results/cordoba_predictions.png)
 
-| Metric | Corrientes (val) | Cordoba (zero-shot) |
+| Metric | Corrientes val (v1.5) | Cordoba zero-shot (v1.5) |
 |---|---|---|
 | IoU | 0.54 | 0.13 |
 | Recall | 0.71 | **0.75** |
@@ -180,12 +172,13 @@ wildfire-burn-scar/
 │   ├── validation_overview_v15.png      Per-tag: v1.5 multi-scale neck
 │   ├── validation_overview_v16.png      Per-tag: v1.6 T=2 temporal fusion
 │   ├── threshold_sweep.png              Metrics vs threshold + PR curve (v1.1)
-│   ├── training_curves_prithvi_burn_scar.png
-│   ├── predictions_prithvi_burn_scar.png
 │   ├── dnbr_vs_firms_comparison.png
 │   ├── cordoba_predictions.png
 │   ├── cordoba_finetune_curves.png
 │   └── cordoba_finetune_predictions.png
+├── scripts/
+│   ├── 00_prefire_download.py           Download pre-fire Sentinel-2 tiles for T=2 pairs
+│   └── 03b_paired_patches.py            Build aligned pre/post patch pairs (5,601 valid T=2 pairs)
 ├── environment.yml
 └── .gitignore
 ```
@@ -207,13 +200,10 @@ Copy `.env.example` to `.env` and fill in your credentials:
 CDSE_USER=your_copernicus_user
 CDSE_PASSWORD=your_copernicus_password
 FIRMS_API_KEY=your_firms_key
-CDS_URL=https://cds.climate.copernicus.eu/api
-CDS_KEY=your_cds_key
 ```
 
 - CDSE: free account at [dataspace.copernicus.eu](https://dataspace.copernicus.eu)
 - FIRMS: free API key at [firms.modaps.eosdis.nasa.gov](https://firms.modaps.eosdis.nasa.gov/api/area/)
-- CDS: free account at [cds.climate.copernicus.eu](https://cds.climate.copernicus.eu)
 
 **Run order**
 
@@ -226,7 +216,6 @@ Notebooks 04, 04b, 06, and 07 require a GPU and are designed for Google Colab (A
 |---|---|---|
 | Sentinel-2 L2A | ESA / Copernicus Data Space | Free, registration required |
 | VIIRS SNPP active fire | NASA FIRMS | Free, API key required |
-| ERA5 reanalysis | ECMWF / Copernicus CDS | Free, registration required |
 
 ## References
 

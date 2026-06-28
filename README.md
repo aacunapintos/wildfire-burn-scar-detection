@@ -15,7 +15,7 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 
 ![Portfolio overview](results/validation_overview.png)
 
-*Best, median, and worst-performing patches from the Corrientes validation set (1,137 patches). Error maps: green = true positive, orange = false positive, red = false negative.*
+*Best, median, and worst-performing patches from the Corrientes validation set (1,138 patches). Error maps: green = true positive, orange = false positive, red = false negative.*
 
 ## Approach
 
@@ -122,14 +122,19 @@ The FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The
 
 The fine-tuning trades some recall for a large precision gain. Overall IoU improves 2.14x. AUC-ROC reaches 0.85, indicating strong discriminative ability after adaptation. The encoder was never updated — all improvement comes from adapting the 2M-parameter decoder to the new biome.
 
-## Limitations and Ongoing Improvements
+## Limitations
 
-The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba.
+The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.13 zero-shot vs 0.34 after few-shot adaptation).
 
-Ongoing improvements:
+Planned future work: multi-region training to reduce domain gap from the start, and spectral augmentation during training to reduce biome-specific memorization.
 
-- **Multi-region training:** include Cordoba and a third biome in the training split to reduce domain gap from the start
-- **Spectral augmentation:** random per-band scaling during training to reduce spectral memorization
+## Changelog
+
+| Version | Change | Val IoU | Val F1 | Notes |
+|---|---|---|---|---|
+| v1.0 | Base model, threshold=0.50 | 0.42 | 0.591 | Prithvi-100M + FPN, 40 epochs |
+| v1.1 | Optimal threshold t=0.65 | 0.43 | 0.604 | Post-processing only, no retraining. Precision +15%, false positives reduced. |
+| v1.2 | Continuation training epochs 41-80 | **0.45** | **0.621** | Best checkpoint epoch 73. Precision +18% vs v1.1. |
 
 ## Repository Structure
 
@@ -193,14 +198,6 @@ Notebooks 04, 06, and 07 require a GPU and are designed for Google Colab (A100 r
 | Sentinel-2 L2A | ESA / Copernicus Data Space | Free, registration required |
 | VIIRS SNPP active fire | NASA FIRMS | Free, API key required |
 | ERA5 reanalysis | ECMWF / Copernicus CDS | Free, registration required |
-
-## Changelog
-
-| Version | Change | Val IoU | Val F1 | Notes |
-|---|---|---|---|---|
-| v1.0 | Base model, threshold=0.50 | 0.42 | 0.591 | Prithvi-100M + FPN, 40 epochs |
-| v1.1 | Optimal threshold t=0.65 | 0.43 | 0.604 | Post-processing only, no retraining. Precision +15%, false positives reduced. |
-| v1.2 | Continuation training epochs 41-80 | **0.45** | **0.621** | Best checkpoint epoch 73. Precision +18% vs v1.1. |
 
 ## References
 

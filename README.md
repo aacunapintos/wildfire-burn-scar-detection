@@ -2,6 +2,12 @@
 
 Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geospatial foundation model fine-tuned on Sentinel-2 L2A imagery. Trained on the 2021-2022 Corrientes, Argentina fire season (~900,000 ha burned) and evaluated for geographic generalization on an unseen region (Cordoba, 2020).
 
+After a wildfire, knowing exactly which areas burned matters for emergency response, insurance assessment, and ecological monitoring — but field surveys are slow and dangerous at scale. This project automates burn scar mapping from freely available satellite imagery: given a pair of Sentinel-2 images taken before and after a fire, the model produces a pixel-level burned-area map across hundreds of thousands of hectares in minutes. The approach was trained on the 2022 Corrientes fires in Argentina and tested on an entirely different region and vegetation type without retraining.
+
+![Portfolio overview](results/validation_overview.png)
+
+*Best, median, and worst-performing patches from the Corrientes validation set. Error maps: green = true positive, orange = false positive, red = false negative. Right panel: full model progression v1.0→v1.6 and best-model metrics (v1.6 T=2: IoU=0.64, F1=0.78).*
+
 ## Key Results
 
 | Model | Labels | Region | Pixel IoU | Recall | Precision | AUC-ROC |
@@ -13,10 +19,6 @@ Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geo
 | **Prithvi-100M + FPN (v1.5, few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.21** | **55%** | **26%** | **0.83** |
 
 49x improvement over the FIRMS-based baseline. Adding a pre-fire temporal input (T=2 Siamese fusion) raises IoU from 0.54 to 0.64 (+18.6%), improving both precision and recall simultaneously. Zero-shot transfer to Cordoba with v1.5 yields IoU=0.09; few-shot fine-tuning of the decoder on 100 Cordoba patches raises IoU to 0.21 (+139%, 2.4x) and AUC-ROC to 0.83, with encoder kept frozen throughout.
-
-![Portfolio overview](results/validation_overview.png)
-
-*Best, median, and worst-performing patches from the Corrientes validation set. Error maps: green = true positive, orange = false positive, red = false negative. Right panel: full model progression v1.0→v1.6 and best-model metrics (v1.6 T=2: IoU=0.64, F1=0.78).*
 
 ## Approach
 
@@ -231,3 +233,7 @@ Notebooks 04, 04b, 06, and 07 require a GPU and are designed for Google Colab (A
 - HuggingFace model: [ibm-nasa-geospatial/Prithvi-EO-1.0-100M](https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-1.0-100M)
 - Key, C.H. and Benson, N.C. (2006). Landscape Assessment: Ground measure of severity. USDA Forest Service.
 - terratorch: [github.com/IBM/terratorch](https://github.com/IBM/terratorch)
+
+## License
+
+MIT

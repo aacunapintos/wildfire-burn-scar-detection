@@ -2,7 +2,7 @@
 
 Semantic segmentation of wildfire burn scars using the IBM/NASA Prithvi-100M geospatial foundation model fine-tuned on Sentinel-2 L2A imagery. Trained on the 2021-2022 Corrientes, Argentina fire season (~900,000 ha burned) and evaluated for geographic generalization on an unseen region (Cordoba, 2020).
 
-After a wildfire, knowing exactly which areas burned matters for emergency response, insurance assessment, and ecological monitoring — but field surveys are slow and dangerous at scale. This project automates burn scar mapping from freely available satellite imagery: given a pair of Sentinel-2 images taken before and after a fire, the model produces a pixel-level burned-area map across hundreds of thousands of hectares in minutes. The approach was trained on the 2022 Corrientes fires in Argentina and tested on an entirely different region and vegetation type without retraining.
+After a wildfire, knowing exactly which areas burned matters for emergency response, insurance assessment, and ecological monitoring, but field surveys are slow and dangerous at scale. This project automates burn scar mapping from freely available satellite imagery: given a pair of Sentinel-2 images taken before and after a fire, the model produces a pixel-level burned-area map across hundreds of thousands of hectares in minutes. The approach was trained on the 2022 Corrientes fires in Argentina and tested on an entirely different region and vegetation type without retraining.
 
 ![Portfolio overview](results/validation_overview.png)
 

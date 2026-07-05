@@ -12,6 +12,8 @@ dependencies:
   - numpy=1.26.4
   - matplotlib=3.9.0
   - tqdm=4.66.4
+  - scikit-learn
+  - netcdf4
   - pip:
     - torch==2.3.1
     - torchvision==0.18.1
@@ -20,3 +22,5 @@ dependencies:
     - pystac-client==0.8.3
     - requests==2.32.3
     - python-dotenv==1.0.1
+    - cdsapi
+    - terratorch

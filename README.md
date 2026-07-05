@@ -6,19 +6,23 @@ After a wildfire, knowing exactly which areas burned matters for emergency respo
 
 ![Portfolio overview](results/validation_overview.png)
 
-*Best, median, and worst-performing patches from the Corrientes validation set. Error maps: green = true positive, orange = false positive, red = false negative. Right panel: full model progression v1.0→v1.6 and best-model metrics (v1.6 T=2: IoU=0.64, F1=0.78).*
+*Best, median, and worst-performing patches from the Corrientes validation set. Error maps: green = true positive, orange = false positive, red = false negative. Right panel: full model progression v1.0->v1.6 and best-model metrics (v1.6 T=2: IoU=0.64, F1=0.78).*
 
 ## Key Results
 
 | Model | Labels | Region | Pixel IoU | Recall | Precision | AUC-ROC |
 |---|---|---|---|---|---|---|
-| U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | — |
-| Prithvi-100M + FPN (v1.5, T=1) | dNBR burn scar | Corrientes | 0.54 | 71% | 69% | — |
-| **Prithvi-100M + FPN (v1.6, T=2)** | **dNBR burn scar** | **Corrientes** | **0.64** | **81%** | **75%** | — |
-| Prithvi-100M + FPN (v1.5, zero-shot) | dNBR | Cordoba | 0.09 | 27% | 12% | 0.67 |
-| **Prithvi-100M + FPN (v1.5, few-shot FT)** | **dNBR** | **Cordoba (100 patches)** | **0.21** | **55%** | **26%** | **0.83** |
+| U-Net ResNet34 | FIRMS active fire | Corrientes | 0.013 | 7% | 14% | - |
+| Prithvi-100M + FPN (v1.5, T=1) | dNBR burn scar | Corrientes val | 0.538 | 71% | 69% | - |
+| **Prithvi-100M + FPN (v1.6, T=2)** | **dNBR burn scar** | **Corrientes val** | **0.639** | **81%** | **75%** | - |
+| Prithvi-100M + FPN (v1.5, zero-shot) | dNBR | Cordoba | 0.115 | 21% | 20% | 0.738 |
+| Prithvi-100M + FPN (v1.6, zero-shot T=2) | dNBR | Cordoba | 0.087 | 16% | 16% | 0.616 |
+| Prithvi-100M + FPN (v1.5, few-shot FT) | dNBR | Cordoba (100 patches) | 0.329 | 54% | 46% | 0.870 |
+| **Prithvi-100M + FPN (v1.6, few-shot FT T=2)** | **dNBR** | **Cordoba (100 pairs)** | **0.810** | **89%** | **90%** | **0.994** |
 
-49x improvement over the FIRMS-based baseline. Adding a pre-fire temporal input (T=2 Siamese fusion) raises IoU from 0.54 to 0.64 (+18.6%), improving both precision and recall simultaneously. Zero-shot transfer to Cordoba with v1.5 yields IoU=0.09; few-shot fine-tuning of the decoder on 100 Cordoba patches raises IoU to 0.21 (+139%, 2.4x) and AUC-ROC to 0.83, with encoder kept frozen throughout.
+Note: v1.6 FT Cordoba numbers reflect within-region adaptation, training and test patches come from the same Cordoba MGRS tiles. The clean geographic generalization benchmark is the zero-shot AUC-ROC (0.738 for v1.5).
+
+49x improvement over the FIRMS-based baseline. Adding a pre-fire temporal input (T=2 Siamese fusion) raises IoU from 0.538 to 0.639 (+18.6%) on Corrientes. Zero-shot transfer to Cordoba with v1.5 yields IoU=0.115, AUC-ROC=0.738; few-shot fine-tuning of the FPN decoder on 100 Cordoba patches (encoder kept frozen) raises IoU to 0.329 and AUC-ROC to 0.870.
 
 ## Approach
 
@@ -39,14 +43,14 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 
 | Component | Details |
 |---|---|
-| Backbone | Prithvi-EO-1.0-100M (IBM/NASA) — shared weights in Siamese T=2 |
+| Backbone | Prithvi-EO-1.0-100M (IBM/NASA), shared weights in Siamese T=2 |
 | Pretraining | Masked autoencoding on HLS (Harmonized Landsat-Sentinel) |
-| Neck (v1.5) | Multi-scale FPN neck (transformer layers 2, 5, 8, 11 → 256-ch feature map) |
-| Neck (v1.6) | TemporalFusionNeck: concat(pre, post) per layer → 1×1 Conv → top-down FPN |
+| Neck (v1.5) | Multi-scale FPN neck (transformer layers 2, 5, 8, 11 -> 256-ch feature map) |
+| Neck (v1.6) | TemporalFusionNeck: concat(pre, post) per layer -> 1x1 Conv -> top-down FPN |
 | Decoder | Feature Pyramid Network (FPN), trained from scratch |
-| Encoder | Frozen v1.0–v1.2; last 2 transformer blocks unfrozen in v1.3+ |
+| Encoder | Frozen v1.0-v1.2; last 2 transformer blocks unfrozen in v1.3+ |
 | Input bands | B02, B03, B04, B8A, B11, B12 at 10 m resolution |
-| Temporal input | T=1 (post-fire only) through v1.5 — T=2 (pre + post) from v1.6 |
+| Temporal input | T=1 (post-fire only) through v1.5; T=2 (pre + post) from v1.6 |
 | Patch size | 224x224 px |
 | Loss | DiceLoss + FocalLoss, fire class weight = 5.0 |
 
@@ -71,7 +75,7 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 | Region | Cordoba Province, central Argentina (Sierras Chicas, xerophytic scrubland) |
 | Coordinates | 65.5W-62.5W / 33.0S-30.5S |
 | Fire event | October-November 2020 |
-| Patches | 6,634 x 224x224 px |
+| Patches | 6,634 x 224x224 px (single-temporal); 3,591 pre/post pairs (T=2) |
 | Positive rate | 63.7% (dNBR > 0.10) |
 
 The Cordoba set is a strict generalization test: different region, different biome, different year.
@@ -88,20 +92,20 @@ Each row shows one patch: RGB image (left), dNBR burn scar mask (center, thresho
 
 ![Threshold sweep](results/threshold_sweep.png)
 
-Sweeping thresholds 0.05→0.95 on the validation set reveals that the optimal operating point is **t=0.65** (not the default 0.50). At t=0.65, precision improves from 0.50 to 0.57 (+15%) by reducing false positives, while IoU and F1 also improve slightly. The PR curve shows the model has strong discriminative ability — the gain comes from choosing a better decision boundary, not retraining.
+Sweeping thresholds 0.05->0.95 on the validation set reveals that the optimal operating point is **t=0.65** (not the default 0.50). At t=0.65, precision improves from 0.50 to 0.57 (+15%) by reducing false positives, while IoU and F1 also improve slightly. The PR curve shows the model has strong discriminative ability: the gain comes from choosing a better decision boundary, not retraining.
 
-### Geographic generalization: Cordoba
+### Geographic generalization: Cordoba zero-shot
 
 ![Cordoba predictions](results/cordoba_predictions.png)
 
 | Metric | Corrientes val (v1.5) | Cordoba zero-shot (v1.5) |
 |---|---|---|
-| IoU | 0.54 | 0.09 |
-| Recall | 0.71 | 0.27 |
-| Precision | 0.69 | 0.12 |
-| AUC-ROC | — | 0.67 |
+| IoU | 0.538 | 0.115 |
+| Recall | 0.71 | 0.21 |
+| Precision | 0.69 | 0.20 |
+| AUC-ROC | - | 0.738 |
 
-Zero-shot transfer to Cordoba degrades more sharply with v1.5 than with earlier versions (v1.0 zero-shot achieved IoU=0.13, AUC-ROC=0.73). The backbone partial unfreeze (v1.3+) and multi-scale neck adapted the model more tightly to Corrientes spectral patterns, reducing cross-biome generalization. AUC-ROC=0.67 remains above random (0.5), confirming that the model retains some transferable burn-scar features. This finding directly motivates Roadmap items #1 (apply T=2 model to Cordoba) and #3 (multi-region training).
+Zero-shot transfer to Cordoba (unseen region, different biome) yields IoU=0.115 and AUC-ROC=0.738. The backbone partial unfreeze (v1.3+) and multi-scale neck adapted the model more tightly to Corrientes spectral patterns, so some cross-biome generalization is lost in exchange for Corrientes performance. AUC-ROC=0.738 confirms the model retains transferable burn-scar features, motivating few-shot fine-tuning.
 
 ### Few-shot domain adaptation: Cordoba
 
@@ -113,39 +117,58 @@ The FPN decoder was fine-tuned on 100 Cordoba patches (encoder kept frozen). The
 
 | Metric | Zero-shot (v1.5) | Few-shot FT (100 patches) | Change |
 |---|---|---|---|
-| IoU | 0.09 | **0.21** | +0.12 (+139%) |
-| Recall | 0.27 | **0.55** | +0.28 |
-| Precision | 0.12 | **0.26** | +0.14 |
-| AUC-ROC | 0.67 | **0.83** | +0.15 |
+| IoU | 0.115 | **0.329** | +0.214 (+186%) |
+| Recall | 0.21 | **0.54** | +0.33 |
+| Precision | 0.20 | **0.46** | +0.26 |
+| AUC-ROC | 0.738 | **0.870** | +0.132 |
 
-Fine-tuning the FPN decoder on 100 Cordoba patches (encoder kept frozen throughout) yields a 2.4x IoU gain and raises AUC-ROC from 0.67 to 0.83. All adaptation comes from the decoder adjusting to the new biome's spectral distribution — the Prithvi-100M encoder weights are never updated.
+Fine-tuning the FPN decoder on 100 Cordoba patches yields a 2.9x IoU gain and raises AUC-ROC from 0.738 to 0.870. All adaptation comes from the decoder adjusting to the new biome's spectral distribution; the Prithvi-100M encoder weights are never updated.
 
-### Temporal fusion: Siamese T=2 model (v1.6)
+### T=2 Siamese evaluation on Cordoba
 
-Adding a pre-fire image (Oct-Nov 2021) as a second temporal input gives the model direct access to spectral change, rather than relying on post-fire reflectance alone. The Siamese backbone (shared weights) processes pre-fire and post-fire images in parallel; the `TemporalFusionNeck` concatenates features at transformer layers 2, 5, 8, 11 and fuses them before the FPN decoder.
+![Cordoba summary](results/cordoba_evaluation_overview.png)
+
+*Left: model progression on Corrientes validation set (v1.0->v1.6). Center: Cordoba evaluation under all four conditions. Right: delta from adding temporal fusion (T=2 vs T=1), red = zero-shot losses, green = fine-tuned gains.*
+
+The v1.6 Siamese model (trained on Corrientes T=2 pairs) was applied to Cordoba both zero-shot and after 100-pair fine-tuning. For a fair comparison, v1.5 and v1.6 are evaluated on the same 3,591 Cordoba T=2 pairs.
+
+| Condition | IoU | Recall | Precision | AUC-ROC |
+|---|---|---|---|---|
+| v1.5 ZS T=1 (6,634 patches) | 0.115 | 0.209 | 0.203 | 0.738 |
+| v1.6 ZS T=2 (3,591 pairs) | 0.087 | 0.162 | 0.158 | 0.616 |
+| v1.5 FT T=1 (100 patches) | 0.329 | 0.540 | 0.457 | 0.870 |
+| v1.6 FT T=2 (100 pairs) | **0.810** | **0.889** | **0.901** | **0.994** |
+
+Zero-shot: the T=2 model underperforms T=1 on Cordoba (IoU 0.087 vs 0.115), suggesting the temporal change signal learned from Corrientes vegetation does not transfer directly to Cordoba xerophytic scrubland. Few-shot fine-tuning reverses this: T=2 FT reaches IoU=0.810 vs 0.329 for T=1 (+0.481 IoU). The FT evaluation uses patches from the same Cordoba MGRS tiles used for training, so these numbers reflect within-region adaptation rather than cross-region generalization. The clean benchmark for geographic transfer is the zero-shot AUC-ROC.
+
+### Temporal fusion: Siamese T=2 model on Corrientes
+
+Adding a pre-fire image (Oct-Nov 2021) as a second temporal input gives the model direct access to spectral change, rather than relying on post-fire reflectance alone. The Siamese backbone (shared weights) processes pre-fire and post-fire images in parallel; the TemporalFusionNeck concatenates features at transformer layers 2, 5, 8, 11 and fuses them before the FPN decoder.
 
 ![T=2 predictions](results/validation_overview_t2.png)
 
-| Metric | v1.5 (T=1, post-fire only) | v1.6 (T=2, pre + post) | Δ |
+| Metric | v1.5 (T=1, post-fire only) | v1.6 (T=2, pre + post) | Delta |
 |---|---|---|---|
-| IoU | 0.5385 | **0.6389** | +0.1004 (+18.6%) |
+| IoU | 0.538 | **0.639** | +0.101 (+18.6%) |
 | F1 | 0.700 | **0.780** | +0.080 |
 | Precision | 0.693 | **0.753** | +0.060 |
 | Recall | 0.707 | **0.808** | +0.101 |
 
-Both precision and recall improve simultaneously — the model eliminates false positives in areas with burn-scar-like reflectance that showed no spectral change between dates (bare soil, dry grassland). Optimal threshold shifted from 0.525 to 0.450, indicating the model outputs more calibrated probability estimates when spectral change information is available.
+Both precision and recall improve simultaneously: the model eliminates false positives in areas with burn-scar-like reflectance that showed no spectral change between dates (bare soil, dry grassland). Optimal threshold shifted from 0.525 to 0.450, indicating more calibrated probability estimates when spectral change information is available.
 
 ## Limitations
 
-The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.12 zero-shot, 0.26 after few-shot adaptation). Multi-region training across diverse biomes would reduce this gap without requiring fine-tuning at inference time.
+The main limitation is biome-induced domain shift. The FPN decoder was trained on a single biome (Corrientes wetlands) and did not encounter the spectral characteristics of mountain xerophytic vegetation, causing over-prediction in Cordoba (Precision=0.20 zero-shot, 0.46 after few-shot adaptation). Multi-region training across diverse biomes would reduce this gap without requiring fine-tuning at inference time.
+
+The few-shot fine-tuning evaluation uses patches from the same region as training, which inflates FT metrics due to spatial correlation between adjacent patches from the same fire scar. The zero-shot AUC-ROC is the more conservative measure of geographic generalization.
 
 ## Roadmap
 
 | Priority | Improvement | Status |
 |---|---|---|
-| 1 | **T=2 evaluation on Cordoba** — apply v1.6 Siamese model to Cordoba zero-shot; pre-fire spectral change should reduce false positives (v1.5 zero-shot Precision=0.12 → est. 0.25+) | Planned |
-| 2 | **Test-Time Augmentation (TTA)** — average predictions over flips and rotations at inference, no retraining required | Planned |
-| 3 | **Multi-region training (Portugal 2022)** — add ~100k ha from a second fire event to the training set, targeting structural reduction of domain shift without per-region fine-tuning | Planned |
+| 1 | T=2 evaluation on Cordoba: v1.6 Siamese applied zero-shot and with 100-pair fine-tuning | Done (v1.7) |
+| 2 | Test-Time Augmentation (TTA): average predictions over flips and rotations at inference, no retraining required | Planned |
+| 3 | Multi-region training (Portugal 2022): add ~100k ha from a second fire event, targeting structural reduction of domain shift without per-region fine-tuning | Planned |
 
 ## Changelog
 
@@ -155,9 +178,10 @@ The main limitation is biome-induced domain shift. The FPN decoder was trained o
 | v1.1 | Optimal threshold t=0.65 | 0.43 | 0.604 | Post-processing only, no retraining. Precision +15%, false positives reduced. |
 | v1.2 | Continuation training epochs 41-80 | 0.45 | 0.621 | Best checkpoint epoch 73. Precision +18% vs v1.1. |
 | v1.3 | Partial backbone unfreeze (last 2 blocks) | **0.50** | **0.662** | Epochs 81-100, differential LR (1e-5/5e-5). IoU +9.9% vs v1.2. |
-| v1.4 | Spectral variation training (contrast ±15%, brightness, noise) | — | — | Perturbation too aggressive late in training — IoU dropped to 0.36, v1.3 checkpoint preserved. |
-| v1.5 | Multi-scale neck (FPN with transformer layers 2, 5, 8, 11) | **0.54** | **0.700** | 45 epochs (25 backbone frozen + 20 partial unfreeze), differential LR (1e-5/5e-5). IoU +8.9% vs v1.3. |
-| v1.6 | Siamese T=2 temporal fusion (pre-fire Oct-Nov 2021 + post-fire) | **0.64** | **0.780** | TemporalFusionNeck fuses pre/post features at layers 2,5,8,11. 45 epochs, threshold=0.450. IoU +18.6% vs v1.5. |
+| v1.4 | Spectral variation training (contrast +/-15%, brightness, noise) | - | - | Perturbation too aggressive late in training, IoU dropped to 0.36, v1.3 checkpoint preserved. |
+| v1.5 | Multi-scale neck (FPN with transformer layers 2, 5, 8, 11) | **0.538** | **0.700** | 45 epochs (25 backbone frozen + 20 partial unfreeze), differential LR (1e-5/5e-5). IoU +8.9% vs v1.3. |
+| v1.6 | Siamese T=2 temporal fusion (pre-fire Oct-Nov 2021 + post-fire) | **0.639** | **0.780** | TemporalFusionNeck fuses pre/post features at layers 2,5,8,11. 45 epochs, threshold=0.450. IoU +18.6% vs v1.5. |
+| v1.7 | Cordoba geographic evaluation: ZS and few-shot FT for T=1 (v1.5) and T=2 (v1.6) | 0.538 | 0.700 | ZS Cordoba: IoU=0.115 (T=1), 0.087 (T=2). FT Cordoba: IoU=0.329 (T=1), 0.810 (T=2, within-region). |
 
 ## Repository Structure
 
@@ -167,13 +191,13 @@ wildfire-burn-scar/
 │   ├── 01_data_acquisition.ipynb        Sentinel-2 L2A (CDSE) + NASA FIRMS download
 │   ├── 02_preprocessing.ipynb           Band stacking, patch extraction, dNBR labels
 │   ├── 03_baseline.ipynb                U-Net ResNet34 training + diagnostic evaluation
-│   ├── 04_prithvi_training.ipynb        Prithvi-100M fine-tuning v1.0–v1.5 (Colab A100)
-│   ├── 04b_prithvi_t2.ipynb             Siamese T=2 temporal fusion — v1.6 (Colab A100)
-│   ├── 05_cordoba_data.ipynb            Córdoba test set acquisition and preprocessing
+│   ├── 04_prithvi_training.ipynb        Prithvi-100M fine-tuning v1.0-v1.5 (Colab A100)
+│   ├── 04b_prithvi_t2.ipynb             Siamese T=2 temporal fusion, v1.6 (Colab A100)
+│   ├── 05_cordoba_data.ipynb            Cordoba test set acquisition and preprocessing
 │   ├── 06_cordoba_evaluation.ipynb      Geographic generalization + few-shot adaptation (Colab A100)
 │   └── 07_inference_demo.ipynb          Single-patch inference demo (Colab)
 ├── results/
-│   ├── validation_overview.png          Global: best/median/worst patches, model progression v1.0→v1.6
+│   ├── validation_overview.png          Global: best/median/worst patches, model progression v1.0->v1.6
 │   ├── validation_overview_t2.png       T=2 detailed: BEST/MED/WORST patches, training curves, metrics
 │   ├── validation_overview_v10.png      Per-tag: v1.0 baseline vs FIRMS comparison
 │   ├── validation_overview_v11.png      Per-tag: v1.1 threshold optimization
@@ -182,10 +206,14 @@ wildfire-burn-scar/
 │   ├── validation_overview_v15.png      Per-tag: v1.5 multi-scale neck
 │   ├── validation_overview_v16.png      Per-tag: v1.6 T=2 temporal fusion
 │   ├── threshold_sweep.png              Metrics vs threshold + PR curve (v1.1)
-│   ├── dnbr_vs_firms_comparison.png
-│   ├── cordoba_predictions.png
-│   ├── cordoba_finetune_curves.png
-│   └── cordoba_finetune_predictions.png
+│   ├── dnbr_vs_firms_comparison.png     dNBR vs FIRMS label comparison
+│   ├── cordoba_predictions.png          v1.5 zero-shot: best patches on Cordoba
+│   ├── cordoba_evaluation_curves.png    v1.5 zero-shot: PR and ROC curves
+│   ├── cordoba_finetune_curves.png      v1.5 few-shot FT: loss and IoU training curves
+│   ├── cordoba_finetune_predictions.png v1.5 few-shot FT: best patches on Cordoba
+│   ├── cordoba_t2_zs_comparison.png     v1.5 vs v1.6 zero-shot on T=2 subset
+│   ├── cordoba_t2_finetune_curves.png   v1.6 T=2 few-shot FT training curves
+│   └── cordoba_evaluation_overview.png  All-in-one: model progression + Cordoba ZS/FT + T=2 temporal delta
 ├── scripts/
 │   ├── 00_prefire_download.py           Download pre-fire Sentinel-2 tiles for T=2 pairs
 │   └── 03b_paired_patches.py            Build aligned pre/post patch pairs (5,601 valid T=2 pairs)

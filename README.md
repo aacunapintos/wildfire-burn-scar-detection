@@ -41,6 +41,19 @@ Trained on the 2021-2022 Corrientes fire season, the model is applied without re
 
 ---
 
+## v2.1 Highlights
+
+- Burn scar segmentation masks converted to GeoPackage (GPKG) vector polygons for direct GIS integration
+- Per-scene NDVI and NBR spectral indices computed from Sentinel-2 L2A surface reflectance
+- Full-scene RGB mosaics reconstructed from non-overlapping patches across all three zero-shot sites
+- Greece and Canada outputs correctly georeferenced in UTM; outputs carry model attribution attributes (`area_ha`, `perimeter_km`, `site`, `date`, `model`)
+
+![Cross-site vector summary](results/cross_site_vector_summary_v21.png)
+
+*Predicted burn scar perimeters as vector polygons (GeoPackage) for three zero-shot sites. Detected areas are model predictions at zero-shot: precision ranges from 20% (Cordoba, Argentine Monte) to 68% (Canada, boreal forest). Approximate perimeters with boundary uncertainty of ~160m due to non-overlapping patch extraction.*
+
+---
+
 ## Approach
 
 ### The label problem
@@ -250,6 +263,20 @@ MC Dropout (forward hooks on FPN decoder GELU layers, p=0.08, N=30 passes) gener
 
 *Operational decision support on Canada ZS patches. Each row shows RGB, burn probability map, and dNBR ground truth for representative DEPLOY, VERIFY, and MONITOR patches.*
 
+### Vector output: burn scar perimeters (v2.1)
+
+![Greece vector output](results/greece_vector_output_v21.png)
+
+*Greece ZS: RGB mosaic (post-fire Sentinel-2), burn probability map, NDVI, and vector polygon perimeters in UTM zone 35N. Strong red probability patches correspond to the Dadia forest burn scar (Evros, August 2023).*
+
+| Site | Polygons | Detected area | Reference area | Note |
+|---|---|---|---|---|
+| Cordoba ZS | 361 | 158,358 ha | ~28,000 ha | Zero-shot, Argentine Monte -- high false positive rate |
+| Greece ZS | 189 | 413,398 ha | ~81,000 ha | Zero-shot, Mediterranean shrubland -- correctly georeferenced (UTM 35N) |
+| Canada ZS | 16 | 94,508 ha | ~163,000 ha | Single tile, boreal forest -- correctly georeferenced (UTM 11N) |
+
+Detected areas reflect zero-shot precision, not validated measurements. Recall at zero-shot ranges from 21% (Cordoba, Canada) to 31% (Greece), consistent with the patch-level metrics in the Key Results table. GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`.
+
 ---
 
 ## Limitations
@@ -259,6 +286,8 @@ MC Dropout (forward hooks on FPN decoder GELU layers, p=0.08, N=30 passes) gener
 **Single temporal input in v2.0.** The v2.0 model uses T=1 (post-fire image only). The v1.6 Siamese model demonstrated that adding a pre-fire temporal input raises IoU by +18.6% on Corrientes. Extending v2.0 to T=3 (as Prithvi-EO-2.0 was pretrained) is the highest-impact architectural improvement.
 
 **ViT tiling artifact.** Predictions show 16x16 pixel block artifacts inherited from the ViT patch tokenizer. Gaussian smoothing (sigma=3) reduces the artifact in uncertainty maps; the effect on binary IoU is minor.
+
+**Patch extraction gap.** Patches are extracted at stride=256 with center crop T=16, leaving 32-pixel (320m) gaps between adjacent patch predictions. Vector perimeters carry a boundary uncertainty of approximately 160m and area estimates may differ from true burned extent by 15-25% depending on polygon size. Overlapping extraction (stride less than 256) would eliminate this artifact but requires re-downloading the original Sentinel-2 imagery.
 
 **Water and nodata contamination.** NWT contains large lakes and rivers that produce false positives. A post-processing NDWI filter (applied during evaluation) partially mitigates this; morphological post-processing would further improve precision.
 
@@ -271,7 +300,7 @@ MC Dropout (forward hooks on FPN decoder GELU layers, p=0.08, N=30 passes) gener
 | 1 | Second training biome (Mediterranean 2021 or boreal 2019) | +10-20 IoU ZS | Planned (v3.0) |
 | 2 | Multi-temporal input T=3 (matching Prithvi-EO-2.0 pretraining) | +5-10 IoU | Planned (v3.0) |
 | 3 | Test-Time Augmentation (flip H/V average) | +2-5 IoU | Planned (v2.1) |
-| 4 | Vector output (GeoJSON burn scar polygon) | Operational | Planned (v2.1) |
+| 4 | Vector output (GeoPackage burn scar polygons + NDVI) | Operational | **Done (v2.1)** |
 | 5 | FastAPI inference endpoint (coordinates + date to mask) | Deployment | Planned (MLOps) |
 | 6 | Morphological post-processing (remove isolated pixels) | Precision | Planned |
 
@@ -291,6 +320,7 @@ MC Dropout (forward hooks on FPN decoder GELU layers, p=0.08, N=30 passes) gener
 | v1.7 | Cordoba geographic evaluation (ZS and few-shot FT, T=1 and T=2) | 0.538 | ZS: IoU=0.115 (T=1), 0.087 (T=2). FT: IoU=0.329 (T=1), 0.810 (T=2 within-region) |
 | v1.8 | Cross-continental ZS evaluation on Greece 2023 (Alexandroupolis, Mediterranean) | 0.538 | ZS Greece: IoU=0.232, AUC-ROC=0.595. No Greek labels. 10,119 patches |
 | **v2.0** | **Backbone upgrade to Prithvi-EO-2.0-300M (307M params, embed_dim=1024, depth=24)** | **0.532** | **New ZS site: Canada NWT 2023 (boreal forest, 163,000 ha). AUC-ROC > 0.5 confirmed in 3 biomes. MC Dropout operational decision support** |
+| **v2.1** | **Vector output: burn scar perimeters as GeoPackage (GPKG) for 3 zero-shot sites** | **0.532** | **NDVI + NBR per scene. RGB mosaics. Georeferenced polygons (UTM) with area, perimeter, model attributes. Boundary uncertainty ~160m** |
 
 ---
 
@@ -314,6 +344,10 @@ wildfire-spread/
 |   +-- world_map_cross_biome_v2.png     Geographic overview: 4 sites across 3 continents
 |   +-- canada_cross_biome_summary_v2.png  Cross-biome IoU and AUC-ROC comparison (v2.0, 4 sites)
 |   +-- canada_decision_support_v2.png   Operational decision support (DEPLOY/VERIFY/MONITOR)
+|   +-- cordoba_vector_output_v21.png   Cordoba v2.1: RGB mosaic, probability, NDVI, vector polygons
+|   +-- greece_vector_output_v21.png    Greece v2.1: RGB mosaic, probability, NDVI, vector polygons
+|   +-- canada_vector_output_v21.png    Canada v2.1: RGB mosaic, probability, NDVI, vector polygons
+|   +-- cross_site_vector_summary_v21.png  Cross-site burn scar perimeters as UTM vector polygons (v2.1)
 |   +-- canada_zs_best_v2.png            Canada ZS: best predictions
 |   +-- canada_zs_curves.png             Canada ZS: PR and ROC curves
 |   +-- validation_overview.png          Corrientes: best/median/worst patches, v1.0 to v1.6 progression

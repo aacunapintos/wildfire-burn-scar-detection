@@ -1,5 +1,7 @@
 # Wildfire Burn Scar Detection -- Prithvi-EO Foundation Models and Sentinel-2
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://aacunapintos.github.io/wildfire-burn-scar-detection/) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
+
 Zero-shot cross-biome burn scar segmentation using IBM/NASA geospatial foundation models on Sentinel-2 L2A imagery. Trained on two fire events on two continents, the model generates GIS-ready burn scar polygons on wildfires it has never seen, with no target-domain annotations.
 
 **[Explore the live interactive demo](https://aacunapintos.github.io/wildfire-burn-scar-detection/)** -- click any detected polygon on the Valparaiso, Chile 2023 wildfire for its burn probability, confidence level, area, and perimeter.

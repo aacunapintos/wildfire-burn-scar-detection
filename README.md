@@ -8,7 +8,7 @@ Zero-shot cross-biome burn scar segmentation using IBM/NASA geospatial foundatio
 
 ![World map](results/world_map_v22.png)
 
-*Training sites (Corrientes, Argentina, subtropical savanna, and East Gippsland, Australia, temperate forest) and the current zero-shot showcase site (Valparaiso, Chile, February 2023, Mediterranean wildland-urban interface). Earlier zero-shot evaluations (Cordoba, Greece, Canada) are documented in the version history below.*
+*Training sites (Corrientes, Argentina, subtropical savanna, and East Gippsland, Australia, temperate forest) and all four zero-shot evaluation sites to date: Cordoba (Argentine Monte), Greece (Mediterranean shrubland), Canada (boreal forest), and the current showcase, Valparaiso, Chile (Mediterranean wildland-urban interface). Per-site metrics for Cordoba, Greece, and Canada are in the version history below; Chile's interactive results are on the live dashboard.*
 
 The current model (v2.2, Prithvi-EO-2.0-300M) reaches IoU=0.6512 on held-out validation data and was applied without retraining to the February 2023 Valparaiso wildfires, one of the deadliest fire episodes in Chile's modern history. It detected 146 burn scar zones covering 203,910 ha, exported as a GIS-ready GeoPackage and shown on the interactive dashboard above.
 

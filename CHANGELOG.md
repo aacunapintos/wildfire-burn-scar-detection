@@ -27,6 +27,7 @@ announcing. The current public release is **v2**, built from internal tags v2.0 
 | v2.1 | Vector output: burn scar perimeters as GeoPackage (GPKG) for 3 zero-shot sites | 0.532 | NDVI + NBR per scene. RGB mosaics. Georeferenced polygons (UTM) with area, perimeter, model attributes. Boundary uncertainty ~160m |
 | v2.2 | Second training biome (Australia); interactive Leaflet dashboard (GitHub Pages); zero-shot showcase on Chile 2023 (Valparaiso) | 0.598 | Threshold-tuned IoU=0.6512, F1=0.7887. 146 polygons, 203,910 ha, mean_prob per polygon, confidence tiering. California/Cerrado planned next |
 | v2.3 | ESA WorldCover land cover context per polygon; dashboard UX pass | 0.598 | Same model as v2.2, no retraining. 146 Chile polygons matched against ESA WorldCover 10m (2021) via zonal statistics. Per-zone popups replace the old sidebar detail view; confidence tiers now show recommended action (ready to use / verify / send crew); Burn Probability vs Area switched from buttons to a dropdown |
+| v2.4 | Chile dNBR ground truth alignment + real zero-shot metrics | 0.598 | Same model as v2.2, no retraining. Probability raster re-exported from patches and cropped to the exact dNBR grid (same UTM origin, no reprojection needed). Chile: IoU=0.175, Precision=0.218, Recall=0.472, AUC-ROC=0.855 (highest of 4 ZS sites) against dNBR>0.15 on 116,976,640 pixels. `mean_dnbr` added per polygon (gpkg + dashboard popup); Cross-Biome IoU Comparison and Chile ZS Metrics panels now show real numbers instead of "Coming soon" |
 
 ---
 
@@ -42,8 +43,9 @@ announcing. The current public release is **v2**, built from internal tags v2.0 
 | v2.0 | Prithvi-EO-2.0-300M + FPN (ZS) | Cordoba | Argentine Monte | 0.115 | 21% | - | 0.738 |
 | v2.0 | Prithvi-EO-2.0-300M + FPN (ZS) | Greece | Mediterranean shrubland | 0.234 | 31% | 0.481 | 0.652 |
 | v2.0 | Prithvi-EO-2.0-300M + FPN (ZS) | Canada NWT | Boreal forest | 0.191 | 21% | 0.680 | 0.606 |
+| v2.2 | Prithvi-EO-2.0-300M + FPN (ZS) | Chile | Mediterranean WUI | 0.175 | 47% | 0.218 | **0.855** |
 
-49x improvement over the FIRMS-based baseline. The v2.0 backbone (307M parameters) achieves competitive zero-shot IoU across 3 biomes never seen during training. Precision of 0.680 on Canada confirms the model is conservative and reliable when it fires, even in a completely unseen biome.
+49x improvement over the FIRMS-based baseline. The v2.0 backbone (307M parameters) achieves competitive zero-shot IoU across 3 biomes never seen during training. Precision of 0.680 on Canada confirms the model is conservative and reliable when it fires, even in a completely unseen biome. Chile's AUC-ROC of 0.855 is the highest of the four zero-shot sites -- the model ranks burned vs. unburned pixels well even where the fixed decision threshold (calibrated on Corrientes + Australia) is not precision-optimal for the new biome.
 
 ---
 

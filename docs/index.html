@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,7 +26,7 @@
     --hh:    44px;
     --bh:    64px;
   }
-  html,body { height:100%; font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  html,body { height:100%; font-family:"Archivo",system-ui,-apple-system,sans-serif;
     background:var(--bg); color:var(--txt); overflow:hidden; }
 
   /* Site banner */
@@ -36,7 +36,7 @@
     display:flex; align-items:center; gap:22px; padding:0 24px; overflow:hidden;
   }
   .sb-id { display:flex; align-items:baseline; gap:9px; flex-shrink:0; }
-  .sb-title { font-size:15px; font-weight:800; color:var(--txt); }
+  .sb-title { font-size:17px; font-weight:700; color:var(--txt); font-family:"Fraunces",Georgia,serif; }
   .sb-sub { font-size:11px; color:var(--mut); white-space:nowrap; }
   .sb-desc { font-size:11.5px; color:var(--lbl); line-height:1.45; }
   .sb-desc strong { color:var(--txt); }
@@ -48,7 +48,7 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:0 16px; z-index:1001;
   }
-  .ht { font-size:13.5px; font-weight:700; color:var(--txt); }
+  .ht { font-size:15px; font-weight:700; color:var(--txt); font-family:"Fraunces",Georgia,serif; }
   .hs { font-size:11px; color:var(--mut); margin-left:9px; }
   .gh {
     font-size:11px; color:var(--mut); text-decoration:none;
@@ -80,7 +80,7 @@
   .dv { height:1px; background:var(--bdr); flex-shrink:0; }
 
   /* Site header */
-  .sn { font-size:17px; font-weight:800; line-height:1.2; margin-bottom:3px; }
+  .sn { font-size:19px; font-weight:700; font-family:"Fraunces",Georgia,serif; line-height:1.2; margin-bottom:3px; }
   .sl2 { font-size:11px; color:var(--mut); margin-bottom:8px; }
   .bdg {
     display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.06em;
@@ -92,15 +92,13 @@
   .ev { font-size:11.5px; color:var(--lbl); line-height:1.65; }
   .ev strong { color:var(--txt); }
 
-  /* Stat cards */
-  .sg { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  /* Stat figures -- no card/box, a left rule carries the grouping instead */
+  .sg { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
   .sw { grid-column:1/-1; }
-  .sc {
-    background:var(--bg); border:1px solid var(--bdr); border-radius:8px; padding:9px 11px;
-    box-shadow:0 1px 2px rgba(20,10,5,.03);
-  }
-  .sv { font-size:19px; font-weight:800; color:var(--val); font-variant-numeric:tabular-nums; line-height:1; font-family:"IBM Plex Mono",monospace; }
-  .sk { font-size:9.5px; color:var(--mut); margin-top:3px; line-height:1.35; }
+  .sc { border-left:2px solid var(--bdr); padding-left:10px; }
+  .sc.sw { border-left-color:var(--acc); }
+  .sv { font-size:23px; font-weight:700; color:var(--val); line-height:1; font-family:"Fraunces",Georgia,serif; }
+  .sk { font-size:9.5px; color:var(--mut); margin-top:4px; line-height:1.35; }
 
   /* Zone distribution bars */
   #dist { display:flex; flex-direction:column; gap:5px; }
@@ -109,13 +107,13 @@
   .dn-ring { position:relative; flex-shrink:0; }
   .dn-ring svg { display:block; }
   .dn-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
-  .dn-pct { font-size:14px; font-weight:800; color:var(--txt); font-family:"IBM Plex Mono",monospace; line-height:1.1; }
+  .dn-pct { font-size:15px; font-weight:700; color:var(--txt); font-family:"Fraunces",Georgia,serif; line-height:1.1; }
   .dn-name { font-size:8px; color:var(--mut); line-height:1.25; max-width:56px; }
   .dn-legend { display:flex; flex-direction:column; gap:3px; }
   .dn-lg-row { display:flex; align-items:center; gap:5px; font-size:10px; }
   .dn-sw { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
   .dn-lg-l { color:var(--lbl); flex:1; }
-  .dn-lg-v { color:var(--mut); font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace; }
+  .dn-lg-v { color:var(--mut); font-variant-numeric:tabular-nums; font-family:"Space Mono",monospace; }
   .dr { display:flex; align-items:center; gap:6px; }
   .dn { width:82px; font-size:10px; color:var(--lbl); flex-shrink:0; }
   .dt { flex:1; height:7px; background:#EDE9E3; border-radius:4px; overflow:hidden; }
@@ -135,9 +133,16 @@
   .lc-sw { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
 
   /* Legend */
-  .leg { display:flex; flex-direction:column; gap:5px; }
-  .lr { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--lbl); }
-  .ls { width:13px; height:13px; border-radius:2px; flex-shrink:0; }
+  /* Legend -- continuous scale bar with boundary ticks, not a swatch list */
+  .leg { padding-bottom:4px; }
+  .ls { display:inline-block; width:11px; height:11px; border-radius:2px; flex-shrink:0; vertical-align:-1px; }
+  .lg-bar { display:flex; height:10px; border-radius:3px; overflow:hidden; gap:1px; }
+  .lg-seg { flex:1; }
+  .lg-ticks { position:relative; height:16px; margin-top:4px; }
+  .lg-tick {
+    position:absolute; transform:translateX(-50%); font-size:9px; color:var(--mut);
+    font-family:"Space Mono",monospace; white-space:nowrap;
+  }
 
   /* Confidence tier badge */
   .conf-badge {
@@ -149,8 +154,8 @@
   .hint { font-size:10px; color:var(--mut); margin-top:5px; }
 
   /* Leaflet popup content (per-polygon detail) */
-  .pu { font-family:"IBM Plex Sans",system-ui,sans-serif; color:var(--lbl); }
-  .pu-a { color:var(--txt); font-size:14px; font-weight:800; font-family:"IBM Plex Mono",monospace; margin-bottom:3px; }
+  .pu { font-family:"Archivo",system-ui,sans-serif; color:var(--lbl); }
+  .pu-a { color:var(--txt); font-size:16px; font-weight:700; font-family:"Fraunces",Georgia,serif; margin-bottom:3px; }
   .pu-p { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--lbl); }
   .pu-perim { font-size:11px; color:var(--mut); margin-top:2px; }
   .pu-c { margin-top:6px; }
@@ -179,7 +184,7 @@
   .vl { width:38px; font-size:10px; color:var(--lbl); flex-shrink:0; }
   .vt { flex:1; height:14px; background:#EDE9E3; border-radius:3px; overflow:hidden; }
   .vf { height:100%; border-radius:3px; }
-  .vv { font-size:10px; font-weight:700; color:var(--lbl); width:36px; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace; }
+  .vv { font-size:10px; font-weight:700; color:var(--lbl); width:36px; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; font-family:"Space Mono",monospace; }
   .v49 { font-size:11px; font-weight:800; color:var(--acc); margin-top:2px; text-align:center; }
 
   /* Greece ZS metric bars */
@@ -221,7 +226,7 @@
   .modesel {
     width:100%; font-size:11px; font-weight:600; padding:7px 8px; margin-bottom:10px;
     border:1px solid var(--bdr); border-radius:4px; background:#FFF;
-    color:var(--lbl); cursor:pointer; font-family:"IBM Plex Sans",system-ui,sans-serif;
+    color:var(--lbl); cursor:pointer; font-family:"Archivo",system-ui,sans-serif;
   }
   .modesel:hover { border-color:var(--acc); }
 
@@ -229,20 +234,25 @@
   .ctleg { display:flex; flex-direction:column; gap:5px; }
   .ctr { display:flex; align-items:center; gap:7px; }
   .ctv { flex:1; font-size:10.5px; color:var(--lbl); }
-  .ctn { font-size:9px; color:var(--mut); font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace; flex-shrink:0; }
+  .ctn { font-size:9px; color:var(--mut); font-variant-numeric:tabular-nums; font-family:"Space Mono",monospace; flex-shrink:0; }
 
-  /* Floating map controls */
-  #mapctrl {
-    position:fixed; z-index:900; left:calc(var(--lw) + 16px); bottom:16px;
-    width:222px; background:rgba(255,255,255,.90); backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px); border:1px solid var(--bdr); border-radius:12px;
-    padding:14px 15px; box-shadow:0 10px 30px rgba(20,10,5,.16);
-  }
-  .mc-head {
+  /* Progressive disclosure -- secondary sections, collapsed by default */
+  .dtl { border-top:1px solid var(--bdr); padding-top:12px; }
+  .dtl summary {
+    list-style:none; cursor:pointer; display:flex; align-items:center; gap:6px;
     font-size:9px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--acc); margin-bottom:10px;
+    color:var(--mut); transition:color .15s;
   }
-  @media (max-width:720px) { #mapctrl { left:16px; } }
+  .dtl summary::-webkit-details-marker { display:none; }
+  .dtl summary::before {
+    content:''; width:0; height:0; flex-shrink:0;
+    border-left:4px solid var(--mut); border-top:3px solid transparent; border-bottom:3px solid transparent;
+    transition:transform .15s, border-color .15s;
+  }
+  .dtl:hover summary, .dtl[open] summary { color:var(--acc); }
+  .dtl:hover summary::before, .dtl[open] summary::before { border-left-color:var(--acc); }
+  .dtl[open] summary::before { transform:rotate(90deg); }
+  .dtl-body { display:flex; flex-direction:column; gap:15px; margin-top:14px; }
 
   /* Leaflet overrides */
   .leaflet-control-zoom { border:1px solid var(--bdr) !important; box-shadow:none !important; }
@@ -253,13 +263,13 @@
   .tt { background:rgba(255,255,255,.96) !important; border:1px solid var(--bdr) !important;
     border-radius:5px !important; color:var(--txt) !important; font-size:12px !important;
     padding:7px 10px !important; box-shadow:0 3px 12px rgba(0,0,0,.12) !important;
-    font-family:"IBM Plex Sans",system-ui,sans-serif !important; pointer-events:none !important; }
-  .tta { font-size:14px; font-weight:700; color:var(--acc); font-family:"IBM Plex Mono",monospace; }
+    font-family:"Archivo",system-ui,sans-serif !important; pointer-events:none !important; }
+  .tta { font-size:15px; font-weight:700; color:var(--acc); font-family:"Fraunces",Georgia,serif; }
   .ttb { color:var(--mut); font-size:10.5px; margin-top:1px; }
 
   .leaflet-control-layers {
     border:1px solid var(--bdr) !important; box-shadow:0 4px 16px rgba(0,0,0,.10) !important;
-    border-radius:8px !important; font-family:"IBM Plex Sans",system-ui,sans-serif !important;
+    border-radius:8px !important; font-family:"Archivo",system-ui,sans-serif !important;
     font-size:12px !important;
   }
   .leaflet-control-layers-selector { accent-color:var(--acc); }
@@ -269,7 +279,7 @@
     position:fixed; z-index:1002; display:none;
     background:#FFF; border:1px solid var(--bdr); border-radius:6px;
     padding:7px 11px; cursor:pointer; font-size:11px; font-weight:600;
-    color:var(--lbl); font-family:"IBM Plex Sans",system-ui,sans-serif;
+    color:var(--lbl); font-family:"Archivo",system-ui,sans-serif;
     box-shadow:0 2px 10px rgba(0,0,0,.10); transition:color .15s,border-color .15s;
     align-items:center; gap:5px;
   }
@@ -355,19 +365,24 @@
     </div>
   </div>
 
-  <div>
-    <div class="sl">Zone Size Distribution</div>
-    <div id="dist"></div>
-  </div>
+  <details class="dtl">
+    <summary>More detection statistics</summary>
+    <div class="dtl-body">
+      <div>
+        <div class="sl">Zone Size Distribution</div>
+        <div id="dist"></div>
+      </div>
 
-  <div>
-    <div class="sl">Land Cover Context</div>
-    <div id="lc"></div>
-    <div style="font-size:9.5px;color:var(--mut);margin-top:6px">
-      Source: ESA WorldCover 10m (2021), Microsoft Planetary Computer. Dominant
-      class per burn scar polygon via zonal statistics.
+      <div>
+        <div class="sl">Land Cover Context</div>
+        <div id="lc"></div>
+        <div style="font-size:9.5px;color:var(--mut);margin-top:6px">
+          Source: ESA WorldCover 10m (2021), Microsoft Planetary Computer. Dominant
+          class per burn scar polygon via zonal statistics.
+        </div>
+      </div>
     </div>
-  </div>
+  </details>
 
   <div class="dv"></div>
 
@@ -443,65 +458,73 @@
 
   <div class="dv"></div>
 
-  <div>
-    <div class="sl">Cross-Biome IoU Comparison</div>
-    <div class="clt">Coming soon &mdash; FIRMS cross-validation pending for Chile.</div>
-    <div style="font-size:9.5px;color:var(--mut);margin-top:6px">
-      Single training site (Corrientes). No annotations from any target biome.
-    </div>
-  </div>
+  <details class="dtl">
+    <summary>Validation history</summary>
+    <div class="dtl-body">
+      <div>
+        <div class="sl">Cross-Biome IoU Comparison</div>
+        <div class="clt">Coming soon &mdash; FIRMS cross-validation pending for Chile.</div>
+        <div style="font-size:9.5px;color:var(--mut);margin-top:6px">
+          Single training site (Corrientes). No annotations from any target biome.
+        </div>
+      </div>
 
-  <div>
-    <div class="sl">Version Progression (val IoU)</div>
-    <div id="vp"></div>
-    <div class="v49">49x improvement over FIRMS baseline</div>
-  </div>
+      <div>
+        <div class="sl">Version Progression (val IoU)</div>
+        <div id="vp"></div>
+        <div class="v49">49x improvement over FIRMS baseline</div>
+      </div>
+
+      <div>
+        <div class="sl">Chile ZS Metrics</div>
+        <div class="clt">Coming soon &mdash; no verified ground truth available for Chile yet.</div>
+      </div>
+    </div>
+  </details>
 
   <div class="dv"></div>
 
-  <div>
-    <div class="sl">Chile ZS Metrics</div>
-    <div class="clt">Coming soon &mdash; no verified ground truth available for Chile yet.</div>
-  </div>
+  <details class="dtl" id="training-details">
+    <summary>Training details</summary>
+    <div class="dtl-body">
+      <div>
+        <div class="sl">Training Convergence (45 epochs, Colab A100)</div>
+        <div id="spark-wrap">
+          <svg id="spark"></svg>
+          <div class="sp-label"><span>Epoch 1</span><span>Phase 1 | Phase 2</span><span>Epoch 45</span></div>
+        </div>
+      </div>
 
-  <div>
-    <div class="sl">Training Convergence (45 epochs, Colab A100)</div>
-    <div id="spark-wrap">
-      <svg id="spark"></svg>
-      <div class="sp-label"><span>Epoch 1</span><span>Phase 1 | Phase 2</span><span>Epoch 45</span></div>
+      <div>
+        <div class="sl">Train vs Val Loss (BCE)</div>
+        <div id="spark-wrap" style="margin-top:0">
+          <svg id="spark-loss"></svg>
+          <div class="sp-label"><span style="color:#C9390F">&#9632; Train</span><span style="color:#2563EB">&#9632; Val</span><span>Epoch 45</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sl">Training Setup</div>
+        <div class="kv">
+          <div class="kvr"><span class="kk">Training site</span><span class="kv2">Corrientes + Australia</span></div>
+          <div class="kvr"><span class="kk">Patches</span><span class="kv2">11,687 at 224x224 px</span></div>
+          <div class="kvr"><span class="kk">Labels</span><span class="kv2">dNBR &gt; 0.15 (post-fire S2)</span></div>
+          <div class="kvr"><span class="kk">Chile annotations</span><span class="kv2" style="color:var(--acc);font-weight:700">None</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sl">Architecture</div>
+        <div class="kv">
+          <div class="kvr"><span class="kk">Backbone</span><span class="kv2">Prithvi-EO-2.0-300M (IBM/NASA)</span></div>
+          <div class="kvr"><span class="kk">Parameters</span><span class="kv2">307 M</span></div>
+          <div class="kvr"><span class="kk">Neck</span><span class="kv2">Multi-scale (layers 5,11,17,23)</span></div>
+          <div class="kvr"><span class="kk">Decoder</span><span class="kv2">FPN, 5-stage transposed conv</span></div>
+          <div class="kvr"><span class="kk">Input</span><span class="kv2">B02 B03 B04 B8A B11 B12 at 10m</span></div>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div>
-    <div class="sl">Train vs Val Loss (BCE)</div>
-    <div id="spark-wrap" style="margin-top:0">
-      <svg id="spark-loss"></svg>
-      <div class="sp-label"><span style="color:#C9390F">&#9632; Train</span><span style="color:#2563EB">&#9632; Val</span><span>Epoch 45</span></div>
-    </div>
-  </div>
-
-  <div class="dv"></div>
-
-  <div>
-    <div class="sl">Training Setup</div>
-    <div class="kv">
-      <div class="kvr"><span class="kk">Training site</span><span class="kv2">Corrientes + Australia</span></div>
-      <div class="kvr"><span class="kk">Patches</span><span class="kv2">11,687 at 224x224 px</span></div>
-      <div class="kvr"><span class="kk">Labels</span><span class="kv2">dNBR &gt; 0.15 (post-fire S2)</span></div>
-      <div class="kvr"><span class="kk">Chile annotations</span><span class="kv2" style="color:var(--acc);font-weight:700">None</span></div>
-    </div>
-  </div>
-
-  <div>
-    <div class="sl">Architecture</div>
-    <div class="kv">
-      <div class="kvr"><span class="kk">Backbone</span><span class="kv2">Prithvi-EO-2.0-300M (IBM/NASA)</span></div>
-      <div class="kvr"><span class="kk">Parameters</span><span class="kv2">307 M</span></div>
-      <div class="kvr"><span class="kk">Neck</span><span class="kv2">Multi-scale (layers 5,11,17,23)</span></div>
-      <div class="kvr"><span class="kk">Decoder</span><span class="kv2">FPN, 5-stage transposed conv</span></div>
-      <div class="kvr"><span class="kk">Input</span><span class="kv2">B02 B03 B04 B8A B11 B12 at 10m</span></div>
-    </div>
-  </div>
+  </details>
 
 </aside>
 
@@ -572,40 +595,54 @@ const vpEl = document.getElementById('vp');
   vpEl.appendChild(d);
 });
 
-/* Training sparkline */
-const iou = [0.4128, 0.4797, 0.4966, 0.4632, 0.4916, 0.5278, 0.5121, 0.5152, 0.5342, 0.5278, 0.5487, 0.5438, 0.5469, 0.5515, 0.523, 0.558, 0.5566, 0.5717, 0.5788, 0.5716, 0.5822, 0.5895, 0.5757, 0.5823, 0.5754, 0.569, 0.571, 0.5772, 0.5824, 0.5933, 0.5872, 0.5803, 0.5906, 0.5951, 0.5919, 0.5863, 0.5966, 0.5927, 0.5859, 0.5899, 0.5911, 0.5977, 0.5981, 0.5926, 0.5955];
-const svg = document.getElementById('spark');
-const W = svg.parentElement.clientWidth - 20;
-const H = 52;
-svg.setAttribute('viewBox', '0 0 '+W+' '+H);
-const ymin=0.38, ymax=0.66;
-const pts = iou.map(function(v,i) {
-  return (i/(iou.length-1)*W).toFixed(1)+','+(H-(v-ymin)/(ymax-ymin)*H).toFixed(1);
-});
-const phaseX = (24/(iou.length-1)*W).toFixed(1);
-svg.innerHTML =
-  '<line x1="'+phaseX+'" y1="0" x2="'+phaseX+'" y2="'+H+'" stroke="#DDD" stroke-width="1" stroke-dasharray="3,2"/>'+
-  '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+
-  'url(#sg)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'+
-  '<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0">'+
-  '<stop offset="0%" stop-color="#E07040"/><stop offset="100%" stop-color="#C9390F"/></linearGradient></defs>';
-
-/* Train vs Val loss sparkline */
-const trainLoss = [0.6358,0.6127,0.5740,0.5627,0.5480,0.5531,0.5389,0.5181,0.5250,0.5144,0.5029,0.4963,0.5076,0.4904,0.4919,0.4830,0.4776,0.4699,0.4600,0.4568,0.4604,0.4593,0.4639,0.4514,0.4551,0.4669,0.4577,0.4662,0.4624,0.4445,0.4464,0.4455,0.4479,0.4433,0.4338,0.4405,0.4328,0.4234,0.4335,0.4296,0.4247,0.4243,0.4354,0.4267,0.4256];
-const valLoss = [0.6804,0.5926,0.6079,0.6129,0.5769,0.5686,0.5675,0.5515,0.5466,0.5498,0.5378,0.5219,0.5257,0.5193,0.5324,0.5101,0.5072,0.5025,0.4866,0.4890,0.4793,0.4807,0.4889,0.4839,0.4758,0.4958,0.4873,0.4883,0.4854,0.4674,0.4678,0.4825,0.4668,0.4656,0.4615,0.4708,0.4637,0.4618,0.4666,0.4601,0.4598,0.4544,0.4567,0.4549,0.4609];
-const svgL = document.getElementById('spark-loss');
-const WL = svgL.parentElement.clientWidth - 20;
-const HL = 52;
-svgL.setAttribute('viewBox', '0 0 '+WL+' '+HL);
-const lmin=0.40, lmax=0.70;
-function lossPts(arr) {
-  return arr.map(function(v,i){ return (i/(arr.length-1)*WL).toFixed(1)+','+(HL-(v-lmin)/(lmax-lmin)*HL).toFixed(1); }).join(' ');
+/* Training sparkline + Train vs Val loss sparkline -- deferred: #training-details
+   starts collapsed (display:none), so clientWidth would read 0 if drawn now.
+   Rendered lazily the first time the <details> is opened instead. */
+function renderTrainingSparkline() {
+  const iou = [0.4128, 0.4797, 0.4966, 0.4632, 0.4916, 0.5278, 0.5121, 0.5152, 0.5342, 0.5278, 0.5487, 0.5438, 0.5469, 0.5515, 0.523, 0.558, 0.5566, 0.5717, 0.5788, 0.5716, 0.5822, 0.5895, 0.5757, 0.5823, 0.5754, 0.569, 0.571, 0.5772, 0.5824, 0.5933, 0.5872, 0.5803, 0.5906, 0.5951, 0.5919, 0.5863, 0.5966, 0.5927, 0.5859, 0.5899, 0.5911, 0.5977, 0.5981, 0.5926, 0.5955];
+  const svg = document.getElementById('spark');
+  const W = svg.parentElement.clientWidth - 20;
+  const H = 52;
+  svg.setAttribute('viewBox', '0 0 '+W+' '+H);
+  const ymin=0.38, ymax=0.66;
+  const pts = iou.map(function(v,i) {
+    return (i/(iou.length-1)*W).toFixed(1)+','+(H-(v-ymin)/(ymax-ymin)*H).toFixed(1);
+  });
+  const phaseX = (24/(iou.length-1)*W).toFixed(1);
+  svg.innerHTML =
+    '<line x1="'+phaseX+'" y1="0" x2="'+phaseX+'" y2="'+H+'" stroke="#DDD" stroke-width="1" stroke-dasharray="3,2"/>'+
+    '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+
+    'url(#sg)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0">'+
+    '<stop offset="0%" stop-color="#E07040"/><stop offset="100%" stop-color="#C9390F"/></linearGradient></defs>';
 }
-const phaseXL = (24/(trainLoss.length-1)*WL).toFixed(1);
-svgL.innerHTML =
-  '<line x1="'+phaseXL+'" y1="0" x2="'+phaseXL+'" y2="'+HL+'" stroke="#DDD" stroke-width="1" stroke-dasharray="3,2"/>'+
-  '<polyline points="'+lossPts(valLoss)+'" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'+
-  '<polyline points="'+lossPts(trainLoss)+'" fill="none" stroke="#C9390F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>';
+
+function renderLossSparkline() {
+  const trainLoss = [0.6358,0.6127,0.5740,0.5627,0.5480,0.5531,0.5389,0.5181,0.5250,0.5144,0.5029,0.4963,0.5076,0.4904,0.4919,0.4830,0.4776,0.4699,0.4600,0.4568,0.4604,0.4593,0.4639,0.4514,0.4551,0.4669,0.4577,0.4662,0.4624,0.4445,0.4464,0.4455,0.4479,0.4433,0.4338,0.4405,0.4328,0.4234,0.4335,0.4296,0.4247,0.4243,0.4354,0.4267,0.4256];
+  const valLoss = [0.6804,0.5926,0.6079,0.6129,0.5769,0.5686,0.5675,0.5515,0.5466,0.5498,0.5378,0.5219,0.5257,0.5193,0.5324,0.5101,0.5072,0.5025,0.4866,0.4890,0.4793,0.4807,0.4889,0.4839,0.4758,0.4958,0.4873,0.4883,0.4854,0.4674,0.4678,0.4825,0.4668,0.4656,0.4615,0.4708,0.4637,0.4618,0.4666,0.4601,0.4598,0.4544,0.4567,0.4549,0.4609];
+  const svgL = document.getElementById('spark-loss');
+  const WL = svgL.parentElement.clientWidth - 20;
+  const HL = 52;
+  svgL.setAttribute('viewBox', '0 0 '+WL+' '+HL);
+  const lmin=0.40, lmax=0.70;
+  function lossPts(arr) {
+    return arr.map(function(v,i){ return (i/(arr.length-1)*WL).toFixed(1)+','+(HL-(v-lmin)/(lmax-lmin)*HL).toFixed(1); }).join(' ');
+  }
+  const phaseXL = (24/(trainLoss.length-1)*WL).toFixed(1);
+  svgL.innerHTML =
+    '<line x1="'+phaseXL+'" y1="0" x2="'+phaseXL+'" y2="'+HL+'" stroke="#DDD" stroke-width="1" stroke-dasharray="3,2"/>'+
+    '<polyline points="'+lossPts(valLoss)+'" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<polyline points="'+lossPts(trainLoss)+'" fill="none" stroke="#C9390F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>';
+}
+
+let sparklinesRendered = false;
+document.getElementById('training-details').addEventListener('toggle', function() {
+  if (this.open && !sparklinesRendered) {
+    sparklinesRendered = true;
+    renderTrainingSparkline();
+    renderLossSparkline();
+  }
+});
 
 /* Map */
 let colorMode = 'prob';
@@ -630,28 +667,32 @@ function pStyle(f) {
 
 const LEGENDS = {
   area: [
-    {label:'&lt; 200 ha', color:'#BFD7ED'},
-    {label:'200 &ndash; 500 ha', color:'#7FADD6'},
-    {label:'500 &ndash; 1,000 ha', color:'#4A7FB5'},
-    {label:'1,000 &ndash; 10,000 ha', color:'#2C5589'},
-    {label:'&gt; 10,000 ha', color:'#16305A'},
+    {tick:null, color:'#BFD7ED'},
+    {tick:'200', color:'#7FADD6'},
+    {tick:'500', color:'#4A7FB5'},
+    {tick:'1k', color:'#2C5589'},
+    {tick:'10k', color:'#16305A'},
   ],
   prob: [
-    {label:'&lt; 0.40', color:'#FFD166'},
-    {label:'0.40 &ndash; 0.45', color:'#FF8C00'},
-    {label:'0.45 &ndash; 0.55', color:'#E05C00'},
-    {label:'0.55 &ndash; 0.65', color:'#C41E3A'},
-    {label:'&gt; 0.65', color:'#7B0000'},
+    {tick:null, color:'#FFD166'},
+    {tick:'0.40', color:'#FF8C00'},
+    {tick:'0.45', color:'#E05C00'},
+    {tick:'0.55', color:'#C41E3A'},
+    {tick:'0.65', color:'#7B0000'},
   ],
 };
 function renderLegend() {
-  const el = document.getElementById('legend-dynamic');
-  el.innerHTML = '';
-  LEGENDS[colorMode].forEach(function(item) {
-    const d = document.createElement('div'); d.className='lr';
-    d.innerHTML = '<div class="ls" style="background:'+item.color+'"></div>'+item.label;
-    el.appendChild(d);
-  });
+  const items = LEGENDS[colorMode];
+  const n = items.length;
+  const segs = items.map(function(it){
+    return '<div class="lg-seg" style="background:'+it.color+'"></div>';
+  }).join('');
+  const ticks = items.slice(1).map(function(it, i){
+    const pct = ((i+1)/n*100).toFixed(1);
+    return '<span class="lg-tick" style="left:'+pct+'%">'+it.tick+'</span>';
+  }).join('');
+  document.getElementById('legend-dynamic').innerHTML =
+    '<div class="lg-bar">'+segs+'</div><div class="lg-ticks">'+ticks+'</div>';
 }
 function setColorMode(m) {
   colorMode = m;
@@ -668,8 +709,8 @@ const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/
 const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution:'Tiles &copy; Esri', maxZoom:19
 });
-lightLayer.addTo(map);
-L.control.layers({'Light':lightLayer,'Satellite':satLayer}, null, {position:'topright'}).addTo(map);
+satLayer.addTo(map);
+L.control.layers({'Satellite':satLayer,'Light':lightLayer}, null, {position:'topright'}).addTo(map);
 
 let active=null;
 function confidenceTier(p) {

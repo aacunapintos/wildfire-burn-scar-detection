@@ -164,8 +164,8 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 | 6 | Morphological post-processing (remove isolated pixels) | Precision | Planned |
 | 7 | Interactive Leaflet dashboard (GitHub Pages) | Portfolio / interpretability | **Done (v2.2)** |
 | 8 | Chile dNBR ground truth alignment + quantitative ZS metrics | Validation | Planned |
-| 9 | California and Cerrado (Brazil) zero-shot sites | Cross-biome coverage | Planned (v2.3) |
-| 10 | ESA WorldCover land cover context per polygon | Interpretability | Planned |
+| 9 | California and Cerrado (Brazil) zero-shot sites | Cross-biome coverage | Planned |
+| 10 | ESA WorldCover land cover context per polygon | Interpretability | **Done (v2.3)** |
 
 ---
 
@@ -185,6 +185,7 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 | **v2.0** | **Backbone upgrade to Prithvi-EO-2.0-300M (307M params, embed_dim=1024, depth=24)** | **0.532** | **New ZS site: Canada NWT 2023 (boreal forest, 163,000 ha). AUC-ROC > 0.5 confirmed in 3 biomes. MC Dropout operational decision support** |
 | **v2.1** | **Vector output: burn scar perimeters as GeoPackage (GPKG) for 3 zero-shot sites** | **0.532** | **NDVI + NBR per scene. RGB mosaics. Georeferenced polygons (UTM) with area, perimeter, model attributes. Boundary uncertainty ~160m** |
 | **v2.2** | **Second training biome (Australia); interactive Leaflet dashboard (GitHub Pages); zero-shot showcase on Chile 2023 (Valparaiso)** | **0.598** | **Threshold-tuned IoU=0.6512, F1=0.7887. 146 polygons, 203,910 ha, mean_prob per polygon, confidence tiering. California/Cerrado planned next** |
+| **v2.3** | **ESA WorldCover land cover context per polygon; dashboard UX pass (per-zone popups, confidence tier legend, area/probability selector)** | **0.598** | **Same model as v2.2, no retraining. 146 Chile polygons matched against ESA WorldCover 10m (2021) via zonal statistics: dominant class + full breakdown, shown as a donut chart per zone** |
 
 ---
 

@@ -135,7 +135,7 @@ Detailed per-version results (Corrientes validation curves, threshold optimizati
 
 Metrics computed pixel-wise against a dNBR (>0.15) ground truth raster for the most-burned tile (T19HBD), at the same decision threshold (P>0.450) used for the vector output -- 116,976,640 valid pixels. AUC-ROC of 0.855 is the highest of the four zero-shot sites tested to date, indicating strong ranking discrimination even though the fixed threshold (calibrated on Corrientes + Australia) is not precision-optimal for this new biome.
 
-GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean_prob`, `mean_dnbr`, `landcover_name`, `landcover_pct`. Explore results interactively on the [live dashboard](https://aacunapintos.github.io/wildfire-burn-scar-detection/): each polygon shows its burn probability, dNBR, confidence tier (HIGH / MEDIUM / LOW), land cover, area, and perimeter on click.
+GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean_prob`, `mean_dnbr`, `landcover_name`, `landcover_pct`. Explore results interactively on the [live dashboard](https://aacunapintos.github.io/wildfire-burn-scar-detection/): each polygon shows its burn probability, confidence tier (HIGH / MEDIUM / LOW), land cover, area, and perimeter on click. dNBR is in the GeoPackage but not yet on the dashboard; it will be added alongside the T=3 model update (see Roadmap).
 
 ---
 

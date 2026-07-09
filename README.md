@@ -1,6 +1,6 @@
 # Wildfire Burn Scar Detection -- Prithvi-EO Foundation Models and Sentinel-2
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://aacunapintos.github.io/wildfire-burn-scar-detection/) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://aacunapintos.github.io/wildfire-burn-scar-detection/) [![Version](https://img.shields.io/badge/version-v2-orange)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
 Zero-shot cross-biome burn scar segmentation using IBM/NASA geospatial foundation models on Sentinel-2 L2A imagery. Trained on two fire events on two continents, the model generates GIS-ready burn scar polygons on wildfires it has never seen, with no target-domain annotations.
 
@@ -10,7 +10,7 @@ Zero-shot cross-biome burn scar segmentation using IBM/NASA geospatial foundatio
 
 *Training sites (Corrientes, Argentina, subtropical savanna, and East Gippsland, Australia, temperate forest) and all four zero-shot evaluation sites to date: Cordoba (Argentine Monte), Greece (Mediterranean shrubland), Canada (boreal forest), and the current showcase, Valparaiso, Chile (Mediterranean wildland-urban interface). Per-site metrics for Cordoba, Greece, and Canada are in the version history below; Chile's interactive results are on the live dashboard.*
 
-The current model (v2.2, Prithvi-EO-2.0-300M) reaches IoU=0.6512 on held-out validation data and was applied without retraining to the February 2023 Valparaiso wildfires, one of the deadliest fire episodes in Chile's modern history. It detected 146 burn scar zones covering 203,910 ha, exported as a GIS-ready GeoPackage and shown on the interactive dashboard above.
+The current release (v2, Prithvi-EO-2.0-300M) reaches IoU=0.6512 on held-out validation data and was applied without retraining to the February 2023 Valparaiso wildfires, one of the deadliest fire episodes in Chile's modern history. It detected 146 burn scar zones covering 203,910 ha, exported as a GIS-ready GeoPackage and shown on the interactive dashboard above.
 
 ---
 
@@ -20,23 +20,24 @@ The current model (v2.2, Prithvi-EO-2.0-300M) reaches IoU=0.6512 on held-out val
 
 The model has since been evaluated zero-shot (no target-domain annotations) across 4 biomes on 3 continents: Argentine Monte scrubland, Mediterranean shrubland, boreal forest, and now Mediterranean wildland-urban interface (Chile, current showcase below). AUC-ROC exceeded 0.5 in every zero-shot biome tested to date.
 
-Full per-version metrics, tables, and figures: **[CHANGELOG.md](CHANGELOG.md)**.
+Full per-version metrics, tables, and figures: **[CHANGELOG.md](CHANGELOG.md)**. "v2" is the public release name for this arc of work; internally it was built across four incremental engineering iterations (v2.0-v2.3), each tagged and logged separately in the Changelog for anyone who wants the granular history.
 
 ---
 
-## v2.2 Highlights
+## v2 Highlights
 
-- Live interactive dashboard (Leaflet + GeoJSON, hosted on GitHub Pages): click any polygon for its burn probability, confidence tier, area, and perimeter, with a toggle between probability-based and area-based coloring
+- Live interactive dashboard (Leaflet + GeoJSON, hosted on GitHub Pages): click any polygon for its burn probability, confidence tier, recommended action, land cover breakdown, area, and perimeter, with a toggle between probability-based and area-based coloring
 - Applied zero-shot to the February 2023 Valparaiso wildfires (Chile), one of the deadliest fire episodes in Chile's modern history, affecting wildland-urban interface areas near Vina del Mar
 - 146 burn scar polygons detected, 203,910 ha total, mean burn probability 0.44 per polygon (range 0.31-0.69)
-- Per-polygon confidence tiering (HIGH / MEDIUM / LOW) based on mean burn probability, flagging likely false positives for manual review instead of presenting every detection as equally reliable
+- Per-polygon confidence tiering (HIGH / MEDIUM / LOW) based on mean burn probability, each paired with a recommended action instead of a bare number
+- Per-polygon land cover context (ESA WorldCover 10m, 2021) via zonal statistics, shown as a donut chart per zone
 - Second training biome (East Gippsland, Australia, temperate forest) added alongside Corrientes before this round of zero-shot evaluation
 
 ![Chile vector output](results/chile_vector_output_v22.png)
 
 *Valparaiso, Chile zero-shot detection: RGB mosaic (post-fire Sentinel-2), burn probability map, and vectorized burn scar polygons. 146 zones, 203,910 ha total, decision threshold=0.450.*
 
-Quantitative zero-shot metrics (IoU, AUC-ROC) for Chile are pending a dNBR reference computation and are not yet available; v2.2 reports descriptive detection statistics only (polygon count, area, mean probability). See Limitations.
+Quantitative zero-shot metrics (IoU, AUC-ROC) for Chile are pending a dNBR reference computation and are not yet available; v2 reports descriptive detection statistics only (polygon count, area, mean probability). See Limitations.
 
 ---
 
@@ -59,7 +60,7 @@ This change increased positive patch coverage from 2.6% to 55.8% (21x more train
 
 *Each row shows one patch: RGB image (left), dNBR burn scar mask (center, threshold dNBR > 0.10), and FIRMS active fire mask (right). dNBR captures the complete burned area; FIRMS misses it because the thermal signal disappears days after burning.*
 
-### Model architecture (current: v2.2, Prithvi-EO-2.0-300M)
+### Model architecture (current: v2, Prithvi-EO-2.0-300M)
 
 | Component | Details |
 |---|---|
@@ -104,7 +105,7 @@ Earlier architecture (v1.x, Prithvi-EO-1.0-100M) is documented in [CHANGELOG.md]
 
 Earlier zero-shot test sites (Cordoba, Greece, Canada) are documented in [CHANGELOG.md](CHANGELOG.md#dataset-earlier-zero-shot-sites-v1x-v21).
 
-### Zero-shot showcase: Valparaiso, Chile (v2.2)
+### Zero-shot showcase: Valparaiso, Chile (v2)
 
 | | |
 |---|---|
@@ -122,7 +123,7 @@ Earlier zero-shot test sites (Cordoba, Greece, Canada) are documented in [CHANGE
 
 Detailed per-version results (Corrientes validation curves, threshold optimization, T=2 temporal fusion ablation, Cordoba few-shot fine-tuning, Greece and Canada zero-shot breakdowns, operational decision support) are in [CHANGELOG.md](CHANGELOG.md#detailed-results). Below: the current showcase.
 
-### Vector output: Chile 2023 (v2.2)
+### Vector output: Chile 2023 (v2)
 
 ![Chile vector output](results/chile_vector_output_v22.png)
 
@@ -148,7 +149,7 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 
 **Water and nodata contamination.** NWT contains large lakes and rivers that produce false positives. A post-processing NDWI filter (applied during evaluation) partially mitigates this; morphological post-processing would further improve precision.
 
-**Chile quantitative validation pending.** Unlike Cordoba, Greece, and Canada, IoU and AUC-ROC for the Chile zero-shot detection are not yet available. The dNBR reference raster and the model's probability raster are currently computed on slightly different pixel grids, and require alignment before per-polygon scoring is reliable. Only descriptive detection statistics (polygon count, area, mean probability) are reported for v2.2 until this is resolved.
+**Chile quantitative validation pending.** Unlike Cordoba, Greece, and Canada, IoU and AUC-ROC for the Chile zero-shot detection are not yet available. The dNBR reference raster and the model's probability raster are currently computed on slightly different pixel grids, and require alignment before per-polygon scoring is reliable. Only descriptive detection statistics (polygon count, area, mean probability) are reported for v2 until this is resolved.
 
 ---
 

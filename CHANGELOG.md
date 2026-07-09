@@ -2,6 +2,12 @@
 
 Full experimental history, per-version metrics, and figures for the wildfire burn scar detection project. For the current model, live demo, and headline results, see [README.md](README.md).
 
+**Two numbering tracks.** The tags below (v1.0, v1.1, ..., v2.3, ...) are internal engineering
+milestones, tagged and pushed individually so the iteration process stays inspectable. The
+README and the live dashboard instead refer to public release names (v1, v2, ...), each one
+bundling a cluster of internal tags that together represent a real capability jump worth
+announcing. The current public release is **v2**, built from internal tags v2.0 through v2.3.
+
 ---
 
 ## Version summary

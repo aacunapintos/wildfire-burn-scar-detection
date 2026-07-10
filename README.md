@@ -54,6 +54,8 @@ Full architecture table and the FIRMS-to-dNBR pivot story: [CHANGELOG.md](CHANGE
 
 Re-evaluated the three earlier zero-shot sites (Cordoba, Greece, Canada) against the current checkpoint for the first time since a second training biome (Australia) was added, and introduced an unsupervised per-scene adaptive threshold (Otsu) as the recommended way to operate the model on a new region. The result is not the uniform improvement the Roadmap used to assume: Greece improved, Cordoba regressed, and one apparent gain in Canada turned out to be a measurement artifact, caught before it reached this page. Full breakdown in Limitations below and in [CHANGELOG.md](CHANGELOG.md).
 
+More training data alone does not reliably fix cross-region generalization. I am spending part of this summer on a v3 redesign that targets the actual root causes instead (see Roadmap): burn severity labels that do not transfer across vegetation types, and a model input that depends on absolute reflectance rather than relative change. Targeting results by the end of summer 2026.
+
 ---
 
 ## Key Results

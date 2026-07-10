@@ -151,7 +151,21 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 
 **Water and nodata contamination.** NWT contains large lakes and rivers that produce false positives. A post-processing NDWI filter (applied during evaluation) partially mitigates this; morphological post-processing would further improve precision.
 
-**Chile threshold mismatch.** IoU=0.175 and Precision=0.218 for Chile are lower than the model's held-out validation numbers (IoU=0.651) because the decision threshold (P>0.450) was calibrated on Corrientes + Australia and is not precision-optimal for this new biome. AUC-ROC=0.855 (the highest of the four zero-shot sites) shows the model still ranks burned vs. unburned pixels well; a site-specific threshold sweep would likely close most of the IoU gap, but was not run for this release to keep the zero-shot claim honest (no target-domain tuning).
+**Chile threshold mismatch.** IoU=0.175 and Precision=0.218 for Chile are lower than the model's held-out validation numbers (IoU=0.651) because the decision threshold (P>0.450) was calibrated on Corrientes + Australia and is not precision-optimal for this new biome. AUC-ROC=0.855 (the highest of the four zero-shot sites) shows the model still ranks burned vs. unburned pixels well. A full threshold sweep against the dNBR reference (0.00 to 1.00, 51 steps) found the best possible IoU is 0.178, only 1.3% above the fixed threshold -- this gap is not a calibration problem, it is a discrimination/domain-shift problem, and no amount of re-thresholding closes it for this site.
+
+**Adding a second training biome (Australia) did not uniformly help zero-shot transfer.** Cordoba, Greece, and Canada were only ever evaluated with the pre-Australia checkpoint; re-running all three with the current checkpoint shows a mixed result, not the uniform "+10-20 IoU" the Roadmap previously assumed:
+
+| Site | Pre-Australia IoU | Current IoU (fixed t=0.45) | Current IoU (Otsu, unsupervised) | Pre-Australia AUC-ROC | Current AUC-ROC | GT positive rate |
+|---|---|---|---|---|---|---|
+| Cordoba | 0.115 | 0.105 | 0.104 | 0.738 | 0.666 | 7.2% |
+| Greece | 0.234 | 0.245 | **0.257** | 0.652 | 0.668 | 23.3% |
+| Canada | 0.191 | 0.289 | 0.295 | 0.606 | 0.646 | 38.5% |
+
+Greece improved modestly and Cordoba regressed on both IoU and AUC-ROC, with no calibration escape (a full threshold sweep found no improvement over the fixed threshold). Canada's threshold-sweep "best" result was initially 0.3855 (IoU at t=0.00) -- checked against the site's ground-truth positive rate (0.385) and found to be a mathematical artifact: classifying every pixel as burned always produces an IoU exactly equal to the positive rate, regardless of model skill. At its real operating threshold, Canada's IoU (0.289) is still below that trivial all-positive baseline. One additional training biome is not a reliable lever for zero-shot generalization to a third, unrelated biome.
+
+**Per-scene adaptive threshold (Otsu) recovers part of the calibration gap, without labels.** Instead of one fixed threshold (0.450) across every biome, a per-scene threshold chosen from the shape of the predicted-probability distribution alone (Otsu's method, fully unsupervised, no ground truth used) gives Greece IoU=0.257 (vs. 0.245 fixed) and Canada IoU=0.295 (vs. 0.289 fixed, and it does not select the degenerate all-positive threshold a naive supervised search does). Cordoba sees no improvement, confirming its gap is not a calibration problem. This unsupervised calibration is the operating principle a real deployment should use for any new region, since ground-truth labels are not available at inference time in practice.
+
+**Why not fix the label instead of the threshold.** RBR (Relativized Burn Ratio, Parks et al. 2014) is designed to be more comparable across vegetation types than a fixed dNBR threshold, and is a likely part of a real fix. It was not applied in this round: only the already-thresholded binary burn mask was retained for Cordoba, Greece, and Canada during patch extraction, not the continuous dNBR or pre-fire NBR needed to compute RBR. Recomputing it would require reprocessing the original Sentinel-2 scenes for all three sites. This is scoped into the v3 redesign below rather than attempted here.
 
 ---
 
@@ -159,16 +173,18 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 
 | Priority | Improvement | Expected gain | Status |
 |---|---|---|---|
-| 1 | Second training biome (Mediterranean 2021 or boreal 2019) | +10-20 IoU ZS | **Done (v2.2, Australia)** |
-| 2 | Multi-temporal input T=3 (matching Prithvi-EO-2.0 pretraining) | +5-10 IoU | Planned (v3.0) |
-| 3 | Test-Time Augmentation (flip H/V average) | +2-5 IoU | Planned |
-| 4 | Vector output (GeoPackage burn scar polygons + NDVI) | Operational | **Done (v2.1)** |
-| 5 | FastAPI inference endpoint (coordinates + date to mask) | Deployment | Planned (MLOps) |
-| 6 | Morphological post-processing (remove isolated pixels) | Precision | Planned |
-| 7 | Interactive Leaflet dashboard (GitHub Pages) | Portfolio / interpretability | **Done (v2.2)** |
-| 8 | Chile dNBR ground truth alignment + quantitative ZS metrics | Validation | **Done (v2.4)** |
-| 9 | California and Cerrado (Brazil) zero-shot sites | Cross-biome coverage | Planned |
-| 10 | ESA WorldCover land cover context per polygon | Interpretability | **Done (v2.3)** |
+| 1 | Second training biome (Mediterranean 2021 or boreal 2019) | Heterogeneous by site, not a uniform gain (see Limitations) | **Done (v2.2, Australia); re-verified against Cordoba/Greece/Canada, mixed result** |
+| 2 | Per-scene adaptive threshold (Otsu, unsupervised, no labels required) | Recovers part of the calibration gap where one exists | **Done** |
+| 3 | Multi-temporal input T=3 (matching Prithvi-EO-2.0 pretraining) | Uncertain in zero-shot: T=2 helped in-domain (+18.6% Corrientes) and fine-tuned (Cordoba 0.33 to 0.81) but hurt zero-shot transfer in the one case tested (Cordoba 0.115 to 0.087, v1.7) | Proposed, deferred (see v3 redesign below) |
+| 4 | Test-Time Augmentation (flip H/V average) | +2-5 IoU | Planned |
+| 5 | Vector output (GeoPackage burn scar polygons + NDVI) | Operational | **Done (v2.1)** |
+| 6 | FastAPI inference endpoint (coordinates + date to mask) | Deployment | Planned (MLOps) |
+| 7 | Morphological post-processing (remove isolated pixels) | Precision | Planned |
+| 8 | Interactive Leaflet dashboard (GitHub Pages) | Portfolio / interpretability | **Done (v2.2)** |
+| 9 | Chile dNBR ground truth alignment + quantitative ZS metrics | Validation | **Done -- revealed a threshold/domain mismatch, not shown on the dashboard until resolved (see Limitations)** |
+| 10 | California and Cerrado (Brazil) zero-shot sites | Cross-biome coverage | Planned |
+| 11 | ESA WorldCover land cover context per polygon | Interpretability | **Done (v2.3)** |
+| 12 | **v3 redesign**: RBR (Relativized Burn Ratio, Parks et al. 2014) instead of a fixed dNBR threshold; per-scene normalized input features instead of raw reflectance; adaptive calibration built into the training pipeline, not bolted on after | Targets the actual root causes found in this round, rather than more training data | Planned as a scoped follow-up (targeted late summer 2026) |
 
 ---
 
@@ -190,6 +206,7 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 | **v2.2** | **Second training biome (Australia); interactive Leaflet dashboard (GitHub Pages); zero-shot showcase on Chile 2023 (Valparaiso)** | **0.598** | **Threshold-tuned IoU=0.6512, F1=0.7887. 146 polygons, 203,910 ha, mean_prob per polygon, confidence tiering. California/Cerrado planned next** |
 | **v2.3** | **ESA WorldCover land cover context per polygon; dashboard UX pass (per-zone popups, confidence tier legend, area/probability selector)** | **0.598** | **Same model as v2.2, no retraining. 146 Chile polygons matched against ESA WorldCover 10m (2021) via zonal statistics: dominant class + full breakdown, shown as a donut chart per zone** |
 | **v2.4** | **Chile dNBR ground truth alignment + real zero-shot metrics** | **0.598** | **Same model as v2.2, no retraining. IoU=0.175, Precision=0.218, Recall=0.472, AUC-ROC=0.855 (highest of 4 ZS sites) against dNBR>0.15, 116,976,640 pixels compared** |
+| **v2.5** | **Re-evaluated Cordoba/Greece/Canada with the v2.2 checkpoint; per-scene adaptive threshold (Otsu)** | **0.598** | **Same model as v2.2, no retraining. First verification of the Australia-biome-addition claim on these 3 sites: mixed result (Greece improved, Cordoba regressed, Canada's naive "improvement" was a measurement artifact -- caught and corrected). Otsu unsupervised threshold recovers part of the calibration gap without labels. See Limitations and CHANGELOG for the full breakdown** |
 
 ---
 

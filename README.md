@@ -2,7 +2,25 @@
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://aacunapintos.github.io/wildfire-burn-scar-detection/) [![Version](https://img.shields.io/badge/version-v2-orange)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](environment.yml) [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)](environment.yml) [![Prithvi--EO--2.0](https://img.shields.io/badge/Prithvi--EO--2.0-IBM%2FNASA-054ADA)](https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-2.0-300M) [![Sentinel--2](https://img.shields.io/badge/Sentinel--2-Copernicus-00205B)](https://dataspace.copernicus.eu) [![GDAL/Rasterio](https://img.shields.io/badge/GDAL%2FRasterio-geospatial-4CAF50)](environment.yml) [![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)](docs/index.html)
+<p>
+<img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
+<img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch"/>
+<img src="https://img.shields.io/badge/TorchGeo-4CAF50?style=flat-square&logoColor=white" alt="TorchGeo"/>
+<img src="https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white" alt="NumPy"/>
+<img src="https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white" alt="scikit-learn"/>
+<img src="https://img.shields.io/badge/GDAL-5C8A3C?style=flat-square&logoColor=white" alt="GDAL"/>
+<img src="https://img.shields.io/badge/Rasterio-8B7355?style=flat-square&logoColor=white" alt="Rasterio"/>
+<img src="https://img.shields.io/badge/GeoPandas-139467?style=flat-square&logoColor=white" alt="GeoPandas"/>
+<img src="https://img.shields.io/badge/Shapely-6B4FA0?style=flat-square&logoColor=white" alt="Shapely"/>
+<img src="https://img.shields.io/badge/segmentation--models--pytorch-662D91?style=flat-square&logoColor=white" alt="segmentation-models-pytorch"/>
+<img src="https://img.shields.io/badge/Prithvi--EO--2.0-054ADA?style=flat-square&logo=ibm&logoColor=white" alt="Prithvi-EO-2.0"/>
+<img src="https://img.shields.io/badge/terratorch-0F62FE?style=flat-square&logo=ibm&logoColor=white" alt="terratorch"/>
+<img src="https://img.shields.io/badge/Sentinel--2%20%2F%20Copernicus-00205B?style=flat-square&logoColor=white" alt="Sentinel-2 / Copernicus"/>
+<img src="https://img.shields.io/badge/NASA%20FIRMS-0B3D91?style=flat-square&logo=nasa&logoColor=white" alt="NASA FIRMS"/>
+<img src="https://img.shields.io/badge/Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white" alt="Leaflet"/>
+<img src="https://img.shields.io/badge/GitHub%20Pages-222222?style=flat-square&logo=githubpages&logoColor=white" alt="GitHub Pages"/>
+<img src="https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white" alt="Jupyter"/>
+</p>
 
 Zero-shot cross-biome burn scar segmentation using IBM/NASA geospatial foundation models on Sentinel-2 L2A imagery. Trained on two fire events on two continents, the model generates GIS-ready burn scar polygons on wildfires it has never seen, with no target-domain annotations.
 

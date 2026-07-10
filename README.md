@@ -110,6 +110,10 @@ Detailed per-site results for Cordoba, Greece, and Canada (vector output, PR/ROC
 | Greece | 0.234 | 0.245 | **0.257** | 0.652 | 0.668 | 23.3% |
 | Canada | 0.191 | 0.289 | 0.295 | 0.606 | 0.646 | 38.5% |
 
+![Zero-shot re-evaluation, before and after adding Australia](results/zs_reeval_before_after_v23.png)
+
+*IoU per site before and after adding Australia as a second training biome (fixed threshold, t=0.45). Greece improved, Cordoba regressed, Canada's shown value is the real operating-threshold result, not the degenerate one described below.*
+
 Greece improved modestly and Cordoba regressed on both IoU and AUC-ROC, with no calibration escape (a full threshold sweep found no improvement over the fixed threshold). Canada's threshold-sweep "best" result was initially 0.3855 (IoU at t=0.00) -- checked against the site's ground-truth positive rate (0.385) and found to be a mathematical artifact: classifying every pixel as burned always produces an IoU exactly equal to the positive rate, regardless of model skill. At its real operating threshold, Canada's IoU (0.289) is still below that trivial all-positive baseline. One additional training biome is not a reliable lever for zero-shot generalization to a third, unrelated biome.
 
 **Per-scene adaptive threshold (Otsu) recovers part of the calibration gap, without labels.** Instead of one fixed threshold (0.450) across every biome, a per-scene threshold chosen from the shape of the predicted-probability distribution alone (Otsu's method, fully unsupervised) gives Greece IoU=0.257 and Canada IoU=0.295, and correctly finds no gain for Cordoba. Unlike the labeled sweep, it never selects the degenerate all-positive threshold. This is the recommended operating strategy for any new region, since ground-truth labels are not available at real deployment time.

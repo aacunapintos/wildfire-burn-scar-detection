@@ -2,15 +2,39 @@
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://aacunapintos.github.io/wildfire-burn-scar-detection/) [![Version](https://img.shields.io/badge/version-v2-orange)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](#license)
 
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](environment.yml) [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)](environment.yml) [![Prithvi--EO--2.0](https://img.shields.io/badge/Prithvi--EO--2.0-IBM%2FNASA-054ADA)](https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-2.0-300M) [![Sentinel--2](https://img.shields.io/badge/Sentinel--2-Copernicus-00205B)](https://dataspace.copernicus.eu) [![GDAL/Rasterio](https://img.shields.io/badge/GDAL%2FRasterio-geospatial-4CAF50)](environment.yml) [![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)](docs/index.html)
+
 Zero-shot cross-biome burn scar segmentation using IBM/NASA geospatial foundation models on Sentinel-2 L2A imagery. Trained on two fire events on two continents, the model generates GIS-ready burn scar polygons on wildfires it has never seen, with no target-domain annotations.
 
 **[Explore the live interactive demo](https://aacunapintos.github.io/wildfire-burn-scar-detection/)** -- click any detected polygon on the Valparaiso, Chile 2023 wildfire for its burn probability, confidence level, area, and perimeter.
 
 ![World map](results/world_map_v22.png)
 
-*Training sites (Corrientes, Argentina, subtropical savanna, and East Gippsland, Australia, temperate forest) and all four zero-shot evaluation sites to date: Cordoba (Argentine Monte), Greece (Mediterranean shrubland), Canada (boreal forest), and the current showcase, Valparaiso, Chile (Mediterranean wildland-urban interface). Per-site metrics for Cordoba, Greece, and Canada are in the version history below; Chile's interactive results are on the live dashboard.*
+*Training sites (Corrientes, Argentina, and East Gippsland, Australia) and all four zero-shot evaluation sites to date, across 3 continents: Cordoba (Argentine Monte), Greece (Mediterranean shrubland), Canada (boreal forest), and Chile (Mediterranean wildland-urban interface, current showcase). Full per-site figures and metrics: [CHANGELOG.md](CHANGELOG.md).*
 
-The current release (v2, Prithvi-EO-2.0-300M) reaches IoU=0.6512 on held-out validation data and was applied without retraining to the February 2023 Valparaiso wildfires, one of the deadliest fire episodes in Chile's modern history. It detected 146 burn scar zones covering 203,910 ha, exported as a GIS-ready GeoPackage and shown on the interactive dashboard above.
+---
+
+## Why this project
+
+I wanted to know whether a large pretrained Earth observation foundation model could be pointed at a wildfire it had never seen, in a biome it had never trained on, and still produce something a disaster-response team could act on without months of region-specific labeling. NASA FIRMS active-fire data turned out to be the wrong signal for that: it detects heat, not burn scars, and misses most of the burned area once the thermal anomaly fades. That led to dNBR-based labels instead, and then to testing the resulting model zero-shot across four increasingly different biomes on three continents, to find out concretely where that promise holds and where it breaks.
+
+## How it works
+
+Detects wildfire burn scars from Sentinel-2 imagery and exports GIS-ready polygons (GeoPackage) for downstream use: post-fire damage assessment, insurance claims validation, land management planning, and government disaster-response reporting.
+
+| | |
+|---|---|
+| Backbone | Prithvi-EO-2.0-300M (IBM/NASA), 307M parameters, pretrained on global multi-temporal HLS imagery |
+| Neck + decoder | Multi-scale FPN neck (transformer layers 5/11/17/23) into a 5-stage transposed-convolution decoder, trained from scratch |
+| Input | Sentinel-2 L2A, 6 bands (B02, B03, B04, B8A, B11, B12), 224x224 px patches |
+| Labels | dNBR (differenced Normalized Burn Ratio) from pre/post-fire imagery, not raw active-fire detections |
+| Output | Per-pixel burn probability, vectorized into GeoPackage polygons with area, perimeter, and a confidence tier |
+
+Full architecture table and the FIRMS-to-dNBR pivot story: [CHANGELOG.md](CHANGELOG.md).
+
+## Latest version (v2.3)
+
+Re-evaluated the three earlier zero-shot sites (Cordoba, Greece, Canada) against the current checkpoint for the first time since a second training biome (Australia) was added, and introduced an unsupervised per-scene adaptive threshold (Otsu) as the recommended way to operate the model on a new region. The result is not the uniform improvement the Roadmap used to assume: Greece improved, Cordoba regressed, and one apparent gain in Canada turned out to be a measurement artifact, caught before it reached this page. Full breakdown in Limitations below and in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -18,110 +42,19 @@ The current release (v2, Prithvi-EO-2.0-300M) reaches IoU=0.6512 on held-out val
 
 **49x improvement over the FIRMS-based baseline**: pixel-level IoU went from 0.013 (naive active-fire labels) to 0.6512 (dNBR labels + Prithvi-EO-2.0-300M, threshold-tuned) on held-out validation data.
 
-The model has since been evaluated zero-shot (no target-domain annotations) across 4 biomes on 3 continents: Argentine Monte scrubland, Mediterranean shrubland, boreal forest, and now Mediterranean wildland-urban interface (Chile, current showcase below). AUC-ROC exceeded 0.5 in every zero-shot biome tested to date.
+| Site | Role | IoU (fixed t=0.45) | AUC-ROC | Note |
+|---|---|---|---|---|
+| Corrientes + Australia | Training | 0.651 | -- | Held-out validation split |
+| Cordoba, Argentina | Zero-shot | 0.105 | 0.666 | Regressed after adding Australia (see Limitations) |
+| Greece | Zero-shot | 0.245 (0.257 w/ Otsu) | 0.668 | Improved after adding Australia |
+| Canada | Zero-shot | 0.289 | 0.646 | See Limitations for a caught measurement artifact |
+| Chile (current showcase) | Zero-shot | 0.175 | 0.855 | 146 polygons, 203,910 ha -- see Results below |
 
-Full per-version metrics, tables, and figures: **[CHANGELOG.md](CHANGELOG.md)**. "v2" is the public release name for this arc of work; internally it was built across four incremental engineering iterations (v2.0-v2.3), each tagged and logged separately in the Changelog for anyone who wants the granular history.
-
----
-
-## v2 Highlights
-
-- Live interactive dashboard (Leaflet + GeoJSON, hosted on GitHub Pages): click any polygon for its burn probability, confidence tier, recommended action, land cover breakdown, area, and perimeter, with a toggle between probability-based and area-based coloring
-- Applied zero-shot to the February 2023 Valparaiso wildfires (Chile), one of the deadliest fire episodes in Chile's modern history, affecting wildland-urban interface areas near Vina del Mar
-- 146 burn scar polygons detected, 203,910 ha total, mean burn probability 0.44 per polygon (range 0.31-0.69)
-- Per-polygon confidence tiering (HIGH / MEDIUM / LOW) based on mean burn probability, each paired with a recommended action instead of a bare number
-- Per-polygon land cover context (ESA WorldCover 10m, 2021) via zonal statistics, shown as a donut chart per zone
-- Second training biome (East Gippsland, Australia, temperate forest) added alongside Corrientes before this round of zero-shot evaluation
-
-![Chile vector output](results/chile_vector_output_v22.png)
-
-*Valparaiso, Chile zero-shot detection: RGB mosaic (post-fire Sentinel-2), burn probability map, and vectorized burn scar polygons. 146 zones, 203,910 ha total, decision threshold=0.450.*
-
-Quantitative zero-shot metrics (IoU, AUC-ROC) for Chile are pending a dNBR reference computation and are not yet available; v2 reports descriptive detection statistics only (polygon count, area, mean probability). See Limitations.
-
----
-
-## Approach
-
-### The label problem
-
-Initial training used NASA FIRMS active fire detections as ground truth. Only 2.6% of patches contained fire pixels, producing a pixel-level IoU of 0.013. The validation metric appeared higher (0.50) because empty patches scored 1.0 trivially, inflating the per-batch average.
-
-FIRMS detects active fire (thermal anomaly), not burn scars. A pixel that burned three days ago leaves no thermal signal but remains a burned area. The correct label source is dNBR (differenced Normalized Burn Ratio), computed from pre- and post-fire Sentinel-2 imagery.
-
-```
-dNBR = NBR_pre - NBR_post     where NBR = (B8A - B12) / (B8A + B12)
-Burn scar threshold: dNBR > 0.10
-```
-
-This change increased positive patch coverage from 2.6% to 55.8% (21x more training signal) and enabled meaningful learning.
-
-![dNBR vs FIRMS](results/dnbr_vs_firms_comparison.png)
-
-*Each row shows one patch: RGB image (left), dNBR burn scar mask (center, threshold dNBR > 0.10), and FIRMS active fire mask (right). dNBR captures the complete burned area; FIRMS misses it because the thermal signal disappears days after burning.*
-
-### Model architecture (current: v2, Prithvi-EO-2.0-300M)
-
-| Component | Details |
-|---|---|
-| Backbone | Prithvi-EO-2.0-300M (IBM/NASA), embed_dim=1024, depth=24, 307M parameters |
-| Pretraining | Masked autoencoding on HLS multi-temporal (T=3) at global scale |
-| Neck | MultiScaleNeck: layers 5, 11, 17, 23 (d_model=1024) to 256-ch feature map |
-| Decoder | Feature Pyramid Network (FPN), 5-stage transposed convolutions, trained from scratch |
-| Input bands | B02, B03, B04, B8A, B11, B12 (same 6 bands, T=1 post-fire) |
-| Patch size | 224x224 px |
-| Threshold | t=0.450 (optimized on Corrientes + Australia validation set) |
-| Loss | DiceLoss + FocalLoss, fire class weight = 5.0 |
-
-Earlier architecture (v1.x, Prithvi-EO-1.0-100M) is documented in [CHANGELOG.md](CHANGELOG.md#model-architecture-v1x-prithvi-eo-10-100m).
-
----
-
-## Dataset
-
-### Training: Corrientes, Argentina
-
-| | |
-|---|---|
-| Region | Corrientes Province, NE Argentina (subtropical wetlands and grasslands) |
-| Coordinates | 59.5W-56.0W / 29.0S-26.5S |
-| Fire event | December 2021 - February 2022 (austral summer, extreme drought year) |
-| Burned area | ~900,000 ha |
-| Scenes | 6 Sentinel-2 L2A tiles, 0% cloud cover |
-| Patches | 5,687 x 224x224 px |
-| Positive rate | 55.8% (dNBR > 0.10) |
-| Source | Copernicus Data Space Ecosystem (CDSE) |
-
-### Training: East Gippsland, Australia
-
-| | |
-|---|---|
-| Region | East Gippsland, Victoria, Australia (temperate eucalyptus forest) |
-| Coordinates | 146.5E-150.0E / 39.0S-36.5S |
-| Fire event | Black Summer 2019-2020 (pre-fire Jul-Aug 2019, post-fire Feb-Mar 2020) |
-| Scenes | 18 Sentinel-2 L2A tiles |
-| Patches | 6,000 x 224x224 px (subsampled from 48,664 extracted) |
-| Source | Copernicus Data Space Ecosystem (CDSE) |
-
-Earlier zero-shot test sites (Cordoba, Greece, Canada) are documented in [CHANGELOG.md](CHANGELOG.md#dataset-earlier-zero-shot-sites-v1x-v21).
-
-### Zero-shot showcase: Valparaiso, Chile (v2)
-
-| | |
-|---|---|
-| Region | Valparaiso Region, Central Chile |
-| Coordinates | 71.8W-71.0W / 33.5S-32.5S |
-| Fire event | February 2023 (one of the deadliest wildfire episodes in Chile's modern history) |
-| Biome | Mediterranean wildland-urban interface |
-| Patches | 6,988 x 256x256 px (most-burned tile, stride=128) |
-| Detected | 146 polygons, 203,910 ha, mean burn probability 0.44 |
-| Labels used in training | None |
+Full per-version metrics, tables, and figures: **[CHANGELOG.md](CHANGELOG.md)**. "v2" is the public release name for this arc of work; internally it was built across incremental engineering iterations (v2.0-v2.3), each tagged and logged separately for anyone who wants the granular history.
 
 ---
 
 ## Results
-
-Detailed per-version results (Corrientes validation curves, threshold optimization, T=2 temporal fusion ablation, Cordoba few-shot fine-tuning, Greece and Canada zero-shot breakdowns, operational decision support) are in [CHANGELOG.md](CHANGELOG.md#detailed-results). Below: the current showcase.
 
 ### Vector output: Chile 2023 (v2)
 
@@ -131,27 +64,23 @@ Detailed per-version results (Corrientes validation curves, threshold optimizati
 
 | Site | Polygons | Detected area | Mean burn probability | IoU | AUC-ROC | Precision | Recall |
 |---|---|---|---|---|---|---|---|
-| Chile ZS (v2.2) | 146 | 203,910 ha | 0.44 (range 0.31-0.69) | 0.175 | 0.855 | 0.218 | 0.472 |
+| Chile ZS | 146 | 203,910 ha | 0.44 (range 0.31-0.69) | 0.175 | 0.855 | 0.218 | 0.472 |
 
-Metrics computed pixel-wise against a dNBR (>0.15) ground truth raster for the most-burned tile (T19HBD), at the same decision threshold (P>0.450) used for the vector output -- 116,976,640 valid pixels. AUC-ROC of 0.855 is the highest of the four zero-shot sites tested to date, indicating strong ranking discrimination even though the fixed threshold (calibrated on Corrientes + Australia) is not precision-optimal for this new biome.
+Metrics computed pixel-wise against a dNBR (>0.15) ground truth raster for the most-burned tile (T19HBD), at the same decision threshold (P>0.450) used for the vector output -- 116,976,640 valid pixels. AUC-ROC of 0.855 is the highest of the four zero-shot sites tested to date: strong ranking discrimination, even though the fixed threshold is not precision-optimal for this biome (see Limitations).
 
-GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean_prob`, `mean_dnbr`, `landcover_name`, `landcover_pct`. Explore results interactively on the [live dashboard](https://aacunapintos.github.io/wildfire-burn-scar-detection/): each polygon shows its burn probability, confidence tier (HIGH / MEDIUM / LOW), land cover, area, and perimeter on click. dNBR is in the GeoPackage but not yet on the dashboard; it will be added alongside the T=3 model update (see Roadmap).
+GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean_prob`, `mean_dnbr`, `landcover_name`, `landcover_pct`. Explore results interactively on the [live dashboard](https://aacunapintos.github.io/wildfire-burn-scar-detection/): each polygon shows its burn probability, confidence tier (HIGH / MEDIUM / LOW), land cover, area, and perimeter on click. dNBR is in the GeoPackage but not yet on the dashboard; held back pending the v3 redesign (see Roadmap and Limitations).
+
+Detailed per-site results for Cordoba, Greece, and Canada (vector output, PR/ROC curves, operational decision support): [CHANGELOG.md](CHANGELOG.md#detailed-results).
 
 ---
 
 ## Limitations
 
-**Biome-induced domain shift.** The FPN decoder was trained on a single biome (Corrientes wetlands). Recall drops significantly in unseen biomes (0.21 in Canada vs 0.81 in Corrientes T=2), meaning the model misses a large fraction of burned area at zero-shot. Precision remains useful (0.68 in Canada): patches flagged as burned are reliable, but the model is conservative.
+**Biome-induced domain shift.** Recall drops significantly in unseen biomes (0.21-0.34 zero-shot vs. 0.81 in-domain with T=2), meaning the model misses a large fraction of burned area outside its training biomes. Precision is generally more reliable: patches flagged as burned tend to be correct, but the model is conservative.
 
-**Single temporal input in v2.0.** The v2.0 model uses T=1 (post-fire image only). The v1.6 Siamese model demonstrated that adding a pre-fire temporal input raises IoU by +18.6% on Corrientes. Extending v2.0 to T=3 (as Prithvi-EO-2.0 was pretrained) is the highest-impact architectural improvement.
+**Single temporal input.** The current model uses T=1 (post-fire image only). A T=2 (pre+post) variant raised in-domain IoU by +18.6% (Corrientes) and helped fine-tuned transfer (Cordoba 0.33 to 0.81), but *hurt* zero-shot transfer in the one case tested (Cordoba 0.115 to 0.087, see CHANGELOG v1.7). Not a safe assumption either way -- see the v3 redesign below.
 
-**ViT tiling artifact.** Predictions show 16x16 pixel block artifacts inherited from the ViT patch tokenizer. Gaussian smoothing (sigma=3) reduces the artifact in uncertainty maps; the effect on binary IoU is minor.
-
-**Patch extraction gap.** Patches are extracted at stride=256 with center crop T=16, leaving 32-pixel (320m) gaps between adjacent patch predictions. Vector perimeters carry a boundary uncertainty of approximately 160m and area estimates may differ from true burned extent by 15-25% depending on polygon size. Overlapping extraction (stride less than 256) would eliminate this artifact but requires re-downloading the original Sentinel-2 imagery.
-
-**Water and nodata contamination.** NWT contains large lakes and rivers that produce false positives. A post-processing NDWI filter (applied during evaluation) partially mitigates this; morphological post-processing would further improve precision.
-
-**Chile threshold mismatch.** IoU=0.175 and Precision=0.218 for Chile are lower than the model's held-out validation numbers (IoU=0.651) because the decision threshold (P>0.450) was calibrated on Corrientes + Australia and is not precision-optimal for this new biome. AUC-ROC=0.855 (the highest of the four zero-shot sites) shows the model still ranks burned vs. unburned pixels well. A full threshold sweep against the dNBR reference (0.00 to 1.00, 51 steps) found the best possible IoU is 0.178, only 1.3% above the fixed threshold -- this gap is not a calibration problem, it is a discrimination/domain-shift problem, and no amount of re-thresholding closes it for this site.
+**Chile threshold mismatch.** IoU=0.175 is well below the model's held-out validation number (0.651) because the fixed decision threshold (P>0.450, calibrated on Corrientes + Australia) is not precision-optimal for this biome. AUC-ROC=0.855 shows the model still ranks burned vs. unburned pixels well. A full threshold sweep against the dNBR reference (51 steps, 0.00-1.00) found the best possible IoU is 0.178, only 1.3% above the fixed threshold -- this gap is a discrimination/domain-shift problem, not a calibration problem, and no amount of re-thresholding closes it for this site.
 
 **Adding a second training biome (Australia) did not uniformly help zero-shot transfer.** Cordoba, Greece, and Canada were only ever evaluated with the pre-Australia checkpoint; re-running all three with the current checkpoint shows a mixed result, not the uniform "+10-20 IoU" the Roadmap previously assumed:
 
@@ -163,9 +92,11 @@ GeoPackage attributes: `area_ha`, `perimeter_km`, `site`, `date`, `model`, `mean
 
 Greece improved modestly and Cordoba regressed on both IoU and AUC-ROC, with no calibration escape (a full threshold sweep found no improvement over the fixed threshold). Canada's threshold-sweep "best" result was initially 0.3855 (IoU at t=0.00) -- checked against the site's ground-truth positive rate (0.385) and found to be a mathematical artifact: classifying every pixel as burned always produces an IoU exactly equal to the positive rate, regardless of model skill. At its real operating threshold, Canada's IoU (0.289) is still below that trivial all-positive baseline. One additional training biome is not a reliable lever for zero-shot generalization to a third, unrelated biome.
 
-**Per-scene adaptive threshold (Otsu) recovers part of the calibration gap, without labels.** Instead of one fixed threshold (0.450) across every biome, a per-scene threshold chosen from the shape of the predicted-probability distribution alone (Otsu's method, fully unsupervised, no ground truth used) gives Greece IoU=0.257 (vs. 0.245 fixed) and Canada IoU=0.295 (vs. 0.289 fixed, and it does not select the degenerate all-positive threshold a naive supervised search does). Cordoba sees no improvement, confirming its gap is not a calibration problem. This unsupervised calibration is the operating principle a real deployment should use for any new region, since ground-truth labels are not available at inference time in practice.
+**Per-scene adaptive threshold (Otsu) recovers part of the calibration gap, without labels.** Instead of one fixed threshold (0.450) across every biome, a per-scene threshold chosen from the shape of the predicted-probability distribution alone (Otsu's method, fully unsupervised) gives Greece IoU=0.257 and Canada IoU=0.295, and correctly finds no gain for Cordoba. Unlike the labeled sweep, it never selects the degenerate all-positive threshold. This is the recommended operating strategy for any new region, since ground-truth labels are not available at real deployment time.
 
-**Why not fix the label instead of the threshold.** RBR (Relativized Burn Ratio, Parks et al. 2014) is designed to be more comparable across vegetation types than a fixed dNBR threshold, and is a likely part of a real fix. It was not applied in this round: only the already-thresholded binary burn mask was retained for Cordoba, Greece, and Canada during patch extraction, not the continuous dNBR or pre-fire NBR needed to compute RBR. Recomputing it would require reprocessing the original Sentinel-2 scenes for all three sites. This is scoped into the v3 redesign below rather than attempted here.
+**Why not fix the label instead of the threshold.** RBR (Relativized Burn Ratio, Parks et al. 2014) is designed to be more comparable across vegetation types than a fixed dNBR threshold, and is a likely part of a real fix. It was not applied in this round: only the already-thresholded binary burn mask was retained for Cordoba, Greece, and Canada during patch extraction, not the continuous dNBR or pre-fire NBR needed to compute RBR. Recomputing it requires reprocessing the original Sentinel-2 scenes for all three sites -- scoped into the v3 redesign below.
+
+**Other known issues:** 16x16 pixel block artifacts inherited from the ViT patch tokenizer (minor effect on binary IoU); ~160m boundary uncertainty on vector perimeters from non-overlapping patch extraction; water/nodata false positives in lake-heavy scenes (NDWI filter partially mitigates this).
 
 ---
 
@@ -173,40 +104,20 @@ Greece improved modestly and Cordoba regressed on both IoU and AUC-ROC, with no 
 
 | Priority | Improvement | Expected gain | Status |
 |---|---|---|---|
-| 1 | Second training biome (Mediterranean 2021 or boreal 2019) | Heterogeneous by site, not a uniform gain (see Limitations) | **Done (v2.2, Australia); re-verified against Cordoba/Greece/Canada, mixed result** |
+| 1 | Second training biome (Mediterranean 2021 or boreal 2019) | Heterogeneous by site, not a uniform gain (see Limitations) | **Done; re-verified against Cordoba/Greece/Canada, mixed result** |
 | 2 | Per-scene adaptive threshold (Otsu, unsupervised, no labels required) | Recovers part of the calibration gap where one exists | **Done** |
-| 3 | Multi-temporal input T=3 (matching Prithvi-EO-2.0 pretraining) | Uncertain in zero-shot: T=2 helped in-domain (+18.6% Corrientes) and fine-tuned (Cordoba 0.33 to 0.81) but hurt zero-shot transfer in the one case tested (Cordoba 0.115 to 0.087, v1.7) | Proposed, deferred (see v3 redesign below) |
+| 3 | Multi-temporal input T=3 (matching Prithvi-EO-2.0 pretraining) | Uncertain in zero-shot: helped in-domain and fine-tuned, hurt zero-shot in the one case tested | Proposed, deferred (see v3 redesign below) |
 | 4 | Test-Time Augmentation (flip H/V average) | +2-5 IoU | Planned |
-| 5 | Vector output (GeoPackage burn scar polygons + NDVI) | Operational | **Done (v2.1)** |
+| 5 | Vector output (GeoPackage burn scar polygons + NDVI) | Operational | **Done** |
 | 6 | FastAPI inference endpoint (coordinates + date to mask) | Deployment | Planned (MLOps) |
 | 7 | Morphological post-processing (remove isolated pixels) | Precision | Planned |
-| 8 | Interactive Leaflet dashboard (GitHub Pages) | Portfolio / interpretability | **Done (v2.2)** |
-| 9 | Chile dNBR ground truth alignment + quantitative ZS metrics | Validation | **Done -- revealed a threshold/domain mismatch, not shown on the dashboard until resolved (see Limitations)** |
+| 8 | Interactive Leaflet dashboard (GitHub Pages) | Portfolio / interpretability | **Done** |
+| 9 | Chile dNBR ground truth alignment + quantitative ZS metrics | Validation | **Done -- revealed a threshold/domain mismatch, not shown on the dashboard until resolved** |
 | 10 | California and Cerrado (Brazil) zero-shot sites | Cross-biome coverage | Planned |
-| 11 | ESA WorldCover land cover context per polygon | Interpretability | **Done (v2.3)** |
-| 12 | **v3 redesign**: RBR (Relativized Burn Ratio, Parks et al. 2014) instead of a fixed dNBR threshold; per-scene normalized input features instead of raw reflectance; adaptive calibration built into the training pipeline, not bolted on after | Targets the actual root causes found in this round, rather than more training data | Planned as a scoped follow-up (targeted late summer 2026) |
+| 11 | ESA WorldCover land cover context per polygon | Interpretability | **Done** |
+| 12 | **v3 redesign**: RBR (Parks et al. 2014) instead of a fixed dNBR threshold; per-scene normalized input features instead of raw reflectance; adaptive calibration built into training | Targets the actual root causes found in this round, rather than more training data | Planned as a scoped follow-up (targeted late summer 2026) |
 
----
-
-## Changelog
-
-| Version | Change | Val IoU | Notes |
-|---|---|---|---|
-| v1.0 | Base model, FIRMS labels, threshold=0.50 | 0.013 | Prithvi-EO-1.0-100M + FPN |
-| v1.1 | Switch to dNBR labels (threshold=0.10) | 0.42 | 21x more positive patches. 49x IoU improvement vs v1.0 |
-| v1.2 | Optimal threshold t=0.65, continuation training | 0.45 | Post-processing only for threshold. Epoch 73 best checkpoint |
-| v1.3 | Partial backbone unfreeze (last 2 transformer blocks) | 0.50 | Differential LR (1e-5 backbone, 5e-5 decoder) |
-| v1.4 | Spectral variation training (contrast, brightness, noise) | 0.36 | Too aggressive late in training. v1.3 checkpoint preserved |
-| v1.5 | Multi-scale FPN neck (layers 2, 5, 8, 11) | 0.538 | 45 epochs. IoU +8.9% vs v1.3. ZS Cordoba: IoU=0.115, AUC-ROC=0.738 |
-| v1.6 | Siamese T=2 temporal fusion (pre + post fire) | 0.639 | TemporalFusionNeck. IoU +18.6% vs v1.5. FT Cordoba T=2: IoU=0.810 |
-| v1.7 | Cordoba geographic evaluation (ZS and few-shot FT, T=1 and T=2) | 0.538 | ZS: IoU=0.115 (T=1), 0.087 (T=2). FT: IoU=0.329 (T=1), 0.810 (T=2 within-region) |
-| v1.8 | Cross-continental ZS evaluation on Greece 2023 (Alexandroupolis, Mediterranean) | 0.538 | ZS Greece: IoU=0.232, AUC-ROC=0.595. No Greek labels. 10,119 patches |
-| **v2.0** | **Backbone upgrade to Prithvi-EO-2.0-300M (307M params, embed_dim=1024, depth=24)** | **0.532** | **New ZS site: Canada NWT 2023 (boreal forest, 163,000 ha). AUC-ROC > 0.5 confirmed in 3 biomes. MC Dropout operational decision support** |
-| **v2.1** | **Vector output: burn scar perimeters as GeoPackage (GPKG) for 3 zero-shot sites** | **0.532** | **NDVI + NBR per scene. RGB mosaics. Georeferenced polygons (UTM) with area, perimeter, model attributes. Boundary uncertainty ~160m** |
-| **v2.2** | **Second training biome (Australia); interactive Leaflet dashboard (GitHub Pages); zero-shot showcase on Chile 2023 (Valparaiso)** | **0.598** | **Threshold-tuned IoU=0.6512, F1=0.7887. 146 polygons, 203,910 ha, mean_prob per polygon, confidence tiering. California/Cerrado planned next** |
-| **v2.3** | **ESA WorldCover land cover context per polygon; dashboard UX pass (per-zone popups, confidence tier legend, area/probability selector)** | **0.598** | **Same model as v2.2, no retraining. 146 Chile polygons matched against ESA WorldCover 10m (2021) via zonal statistics: dominant class + full breakdown, shown as a donut chart per zone** |
-| **v2.4** | **Chile dNBR ground truth alignment + real zero-shot metrics** | **0.598** | **Same model as v2.2, no retraining. IoU=0.175, Precision=0.218, Recall=0.472, AUC-ROC=0.855 (highest of 4 ZS sites) against dNBR>0.15, 116,976,640 pixels compared** |
-| **v2.5** | **Re-evaluated Cordoba/Greece/Canada with the v2.2 checkpoint; per-scene adaptive threshold (Otsu)** | **0.598** | **Same model as v2.2, no retraining. First verification of the Australia-biome-addition claim on these 3 sites: mixed result (Greece improved, Cordoba regressed, Canada's naive "improvement" was a measurement artifact -- caught and corrected). Otsu unsupervised threshold recovers part of the calibration gap without labels. See Limitations and CHANGELOG for the full breakdown** |
+Full changelog with per-version metrics and figures: **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 
@@ -239,30 +150,7 @@ wildfire-spread/
 |   |   +-- 16_chile_prob_export_v22.ipynb  Chile probability raster export for dNBR alignment (Colab T4)
 |   +-- v2.3/
 |       +-- 17_reeval_zs_sites_v22.ipynb    Cordoba/Greece/Canada re-evaluation + adaptive threshold (Colab T4)
-+-- results/
-|   +-- world_map_v22.png                Geographic overview: 2 training sites + Chile ZS (v2.2)
-|   +-- chile_vector_output_v22.png      Chile v2.2: RGB mosaic, probability, vector polygons
-|   +-- cross_site_vector_summary_v22.png  Zero-shot vector summary (v2.2)
-|   +-- threshold_sweep_v22.png          Metrics vs threshold + PR curve (v2.2)
-|   +-- validation_overview_v22.png      Corrientes + Australia validation overview (v2.2)
-|   +-- canada_cross_biome_summary_v2.png  Cross-biome IoU and AUC-ROC comparison (v2.0, 4 sites)
-|   +-- canada_decision_support_v2.png   Operational decision support (DEPLOY/VERIFY/MONITOR)
-|   +-- cordoba_vector_output_v21.png   Cordoba v2.1: RGB mosaic, probability, NDVI, vector polygons
-|   +-- greece_vector_output_v21.png    Greece v2.1: RGB mosaic, probability, NDVI, vector polygons
-|   +-- canada_vector_output_v21.png    Canada v2.1: RGB mosaic, probability, NDVI, vector polygons
-|   +-- cross_site_vector_summary_v21.png  Cross-site burn scar perimeters as UTM vector polygons (v2.1)
-|   +-- canada_zs_best_v2.png            Canada ZS: best predictions
-|   +-- canada_zs_curves.png             Canada ZS: PR and ROC curves
-|   +-- validation_overview.png          Corrientes: best/median/worst patches, v1.0 to v1.6 progression
-|   +-- validation_overview_t2.png       Corrientes T=2: detailed patch grid and training curves
-|   +-- threshold_sweep.png              Metrics vs threshold + PR curve (v1.1)
-|   +-- dnbr_vs_firms_comparison.png     dNBR vs FIRMS label comparison
-|   +-- cordoba_predictions.png          Cordoba v1.5 zero-shot: best patches
-|   +-- cordoba_evaluation_overview.png  All-in-one: model progression + Cordoba ZS/FT + T=2 delta
-|   +-- cordoba_finetune_predictions.png Cordoba v1.5 few-shot FT: best patches
-|   +-- greece_cross_biome_summary.png   Cross-biome IoU and AUC-ROC comparison (v1.x)
-|   +-- greece_zs_best.png               Greece 2023: best zero-shot predictions
-|   +-- greece_zs_curves.png             Greece 2023: PR and ROC curves
++-- results/                             Figures referenced throughout README and CHANGELOG
 +-- scripts/
 |   +-- 00_prefire_download.py           Download pre-fire Sentinel-2 tiles for T=2 pairs
 |   +-- 03b_paired_patches.py            Build aligned pre/post patch pairs
@@ -274,7 +162,7 @@ wildfire-spread/
 |   +-- 17-20_california_cerrado_*.py    California and Cerrado download/patches (planned sites)
 |   +-- 21_run_zs_pipeline.py            Orchestrates download + patch extraction for all ZS sites
 +-- models/
-|   +-- best_prithvi_v22_burn_scar_wildfire.pth  v2.2 checkpoint (Prithvi-EO-2.0-300M + FPN)
+|   +-- best_prithvi_v22_burn_scar_wildfire.pth  Current checkpoint (Prithvi-EO-2.0-300M + FPN)
 +-- environment.yml
 +-- .gitignore
 ```
@@ -318,6 +206,7 @@ Scripts 11 and 21 run locally for the Canada and Chile pipelines respectively (d
 | Sentinel-2 L2A | ESA / Copernicus Data Space Ecosystem (CDSE) | Free, registration required |
 | VIIRS SNPP active fire | NASA FIRMS | Free, API key required |
 | ERA5 reanalysis (fire weather) | Copernicus Climate Data Store (CDS) | Free, registration required |
+| ESA WorldCover 10m (2021) | Microsoft Planetary Computer | Free |
 
 ---
 
@@ -327,6 +216,7 @@ Scripts 11 and 21 run locally for the Canada and Chile pipelines respectively (d
 - Prithvi-EO-1.0-100M: [ibm-nasa-geospatial/Prithvi-EO-1.0-100M](https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-1.0-100M)
 - Prithvi-EO-2.0-300M: [ibm-nasa-geospatial/Prithvi-EO-2.0-300M](https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-2.0-300M)
 - Key, C.H. and Benson, N.C. (2006). Landscape Assessment: Ground measure of severity. USDA Forest Service
+- Parks, S.A., Dillon, G.K., Miller, C. (2014). A New Metric for Quantifying Burn Severity: The Relativized Burn Ratio. Remote Sensing, 6(3), 1827-1844
 - terratorch: [github.com/IBM/terratorch](https://github.com/IBM/terratorch)
 
 ---

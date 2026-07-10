@@ -10,6 +10,63 @@ announcing. The current public release is **v2**, built from internal tags v2.0 
 
 ---
 
+## The label problem (v1.0-v1.1)
+
+Initial training used NASA FIRMS active fire detections as ground truth. Only 2.6% of patches contained fire pixels, producing a pixel-level IoU of 0.013. The validation metric appeared higher (0.50) because empty patches scored 1.0 trivially, inflating the per-batch average.
+
+FIRMS detects active fire (thermal anomaly), not burn scars. A pixel that burned three days ago leaves no thermal signal but remains a burned area. The correct label source is dNBR (differenced Normalized Burn Ratio), computed from pre- and post-fire Sentinel-2 imagery.
+
+```
+dNBR = NBR_pre - NBR_post     where NBR = (B8A - B12) / (B8A + B12)
+Burn scar threshold: dNBR > 0.10
+```
+
+This change increased positive patch coverage from 2.6% to 55.8% (21x more training signal) and enabled meaningful learning.
+
+![dNBR vs FIRMS](results/dnbr_vs_firms_comparison.png)
+
+*Each row shows one patch: RGB image (left), dNBR burn scar mask (center, threshold dNBR > 0.10), and FIRMS active fire mask (right). dNBR captures the complete burned area; FIRMS misses it because the thermal signal disappears days after burning.*
+
+## Dataset: training sites
+
+### Corrientes, Argentina (v1.0)
+
+| | |
+|---|---|
+| Region | Corrientes Province, NE Argentina (subtropical wetlands and grasslands) |
+| Coordinates | 59.5W-56.0W / 29.0S-26.5S |
+| Fire event | December 2021 - February 2022 (austral summer, extreme drought year) |
+| Burned area | ~900,000 ha |
+| Scenes | 6 Sentinel-2 L2A tiles, 0% cloud cover |
+| Patches | 5,687 x 224x224 px |
+| Positive rate | 55.8% (dNBR > 0.10) |
+| Source | Copernicus Data Space Ecosystem (CDSE) |
+
+### East Gippsland, Australia (v2.0/v1.9)
+
+| | |
+|---|---|
+| Region | East Gippsland, Victoria, Australia (temperate eucalyptus forest) |
+| Coordinates | 146.5E-150.0E / 39.0S-36.5S |
+| Fire event | Black Summer 2019-2020 (pre-fire Jul-Aug 2019, post-fire Feb-Mar 2020) |
+| Scenes | 18 Sentinel-2 L2A tiles |
+| Patches | 6,000 x 224x224 px (subsampled from 48,664 extracted) |
+| Source | Copernicus Data Space Ecosystem (CDSE) |
+
+### Zero-shot showcase: Valparaiso, Chile (v2.0)
+
+| | |
+|---|---|
+| Region | Valparaiso Region, Central Chile |
+| Coordinates | 71.8W-71.0W / 33.5S-32.5S |
+| Fire event | February 2023 (one of the deadliest wildfire episodes in Chile's modern history) |
+| Biome | Mediterranean wildland-urban interface |
+| Patches | 6,988 x 256x256 px (most-burned tile, stride=128) |
+| Detected | 146 polygons, 203,910 ha, mean burn probability 0.44 |
+| Labels used in training | None |
+
+---
+
 ## Version summary
 
 | Version | Change | Val IoU | Notes |
@@ -94,7 +151,20 @@ announcing. The current public release is **v2**, built from internal tags v2.0 
 | Patch size | 224x224 px |
 | Loss | DiceLoss + FocalLoss, fire class weight = 5.0 |
 
-Current architecture (v2.0-v2.2, Prithvi-EO-2.0-300M) is documented in the main [README.md](README.md#approach).
+## Model architecture: v2.0+ (Prithvi-EO-2.0-300M)
+
+| Component | Details |
+|---|---|
+| Backbone | Prithvi-EO-2.0-300M (IBM/NASA), embed_dim=1024, depth=24, 307M parameters |
+| Pretraining | Masked autoencoding on HLS multi-temporal (T=3) at global scale |
+| Neck | MultiScaleNeck: layers 5, 11, 17, 23 (d_model=1024) to 256-ch feature map |
+| Decoder | Feature Pyramid Network (FPN), 5-stage transposed convolutions, trained from scratch |
+| Input bands | B02, B03, B04, B8A, B11, B12 (same 6 bands, T=1 post-fire) |
+| Patch size | 224x224 px |
+| Threshold | t=0.450 fixed (optimized on Corrientes + Australia validation set); per-scene Otsu threshold recommended for new regions since v2.3, see Limitations in the README |
+| Loss | DiceLoss + FocalLoss, fire class weight = 5.0 |
+
+A condensed version of this table is in the main [README.md](README.md#how-it-works).
 
 ---
 

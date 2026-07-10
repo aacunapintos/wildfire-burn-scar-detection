@@ -217,20 +217,28 @@ wildfire-spread/
 +-- CHANGELOG.md                         Full version history: metrics, figures, detailed results
 +-- docs/
 |   +-- index.html                       Interactive Leaflet dashboard (GitHub Pages, data embedded inline)
-+-- notebooks/
-|   +-- 01_data_acquisition.ipynb        Sentinel-2 L2A (CDSE) + NASA FIRMS download
-|   +-- 02_preprocessing.ipynb           Band stacking, patch extraction, dNBR labels
-|   +-- 03_baseline.ipynb                U-Net ResNet34 training + diagnostic evaluation
-|   +-- 04_prithvi_training.ipynb        Prithvi-EO-1.0-100M fine-tuning v1.0-v1.5 (Colab A100)
-|   +-- 04b_prithvi_t2.ipynb             Siamese T=2 temporal fusion, v1.6 (Colab A100)
-|   +-- 05_cordoba_data.ipynb            Cordoba test set acquisition and preprocessing
-|   +-- 06_cordoba_evaluation.ipynb      Geographic generalization + few-shot adaptation (Colab A100)
-|   +-- 07_inference_demo.ipynb          Single-patch inference demo (Colab)
-|   +-- 08_prithvi_v2_training.ipynb     Prithvi-EO-2.0-300M fine-tuning v2.0 (Colab A100)
-|   +-- 09_greece_zs_evaluation.ipynb    Cross-continental ZS evaluation on Greece 2023 (Colab A100)
-|   +-- 10_canada_zs_evaluation.ipynb    ZS evaluation on Canada NWT 2023 + decision support (Colab A100)
++-- notebooks/                          Organized by the release that introduced each notebook
+|   +-- v1.0/                            Base pipeline (consolidated from 14 exploratory notebooks)
+|   |   +-- 01_data_acquisition.ipynb    Sentinel-2 L2A (CDSE) + NASA FIRMS download
+|   |   +-- 02_preprocessing.ipynb       Band stacking, patch extraction, dNBR labels
+|   |   +-- 03_baseline.ipynb            U-Net ResNet34 training + diagnostic evaluation
+|   |   +-- 04_prithvi_training.ipynb    Prithvi-EO-1.0-100M fine-tuning v1.0-v1.5 (Colab A100)
+|   |   +-- 05_cordoba_data.ipynb        Cordoba test set acquisition and preprocessing
+|   |   +-- 06_cordoba_evaluation.ipynb  Geographic generalization + few-shot adaptation (Colab A100)
+|   |   +-- 07_inference_demo.ipynb      Single-patch inference demo (Colab)
+|   +-- v1.6/
+|   |   +-- 04b_prithvi_t2.ipynb         Siamese T=2 temporal fusion (Colab A100)
+|   +-- v1.8/
+|   |   +-- 09_greece_zs_evaluation.ipynb  Cross-continental ZS evaluation on Greece 2023 (Colab A100)
+|   +-- v1.9/
+|   |   +-- 08_prithvi_v2_training.ipynb   Prithvi-EO-2.0-300M fine-tuning (Colab A100)
+|   |   +-- 10_canada_zs_evaluation.ipynb  ZS evaluation on Canada NWT 2023 + decision support (Colab A100)
+|   +-- v2.0/
+|   |   +-- 15_train_v22.ipynb           Training (Corrientes + Australia) + Chile ZS (Colab A100)
 |   +-- v2.2/
-|       +-- 15_train_v22.ipynb           Training (Corrientes + Australia) + Chile ZS (Colab A100)
+|   |   +-- 16_chile_prob_export_v22.ipynb  Chile probability raster export for dNBR alignment (Colab T4)
+|   +-- v2.3/
+|       +-- 17_reeval_zs_sites_v22.ipynb    Cordoba/Greece/Canada re-evaluation + adaptive threshold (Colab T4)
 +-- results/
 |   +-- world_map_v22.png                Geographic overview: 2 training sites + Chile ZS (v2.2)
 |   +-- chile_vector_output_v22.png      Chile v2.2: RGB mosaic, probability, vector polygons
@@ -297,8 +305,8 @@ FIRMS_API_KEY=your_firms_key
 
 **Run order**
 
-Notebooks 01-03 and 05 run locally on CPU (4-5 hours total, mostly data download).
-Notebooks 04, 04b, 06, 08, 09, 10, and v2.2/15 require a GPU (Google Colab A100 recommended).
+Notebooks v1.0/01-03 and v1.0/05 run locally on CPU (4-5 hours total, mostly data download).
+Notebooks v1.0/04, v1.6/04b, v1.0/06, v1.9/08, v1.8/09, v1.9/10, and v2.0/15 require a GPU (Google Colab A100 recommended). v2.2/16 and v2.3/17 are inference-only and run fine on a Colab T4.
 Scripts 11 and 21 run locally for the Canada and Chile pipelines respectively (download + patch extraction, several hours each).
 
 ---

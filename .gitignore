@@ -23,12 +23,6 @@ outputs/
 # Local working files (not part of the public pipeline)
 NEXT_STEPS.md
 ERRORS.md
-REFERENCES.md
-IMPROVEMENTS.md
-
-# Local scripts not part of pipeline
-diag_stac.py
-requirements.txt
 
 # Draft figures
 results/linkedin_figure*.png
